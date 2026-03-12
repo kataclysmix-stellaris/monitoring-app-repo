@@ -89,3 +89,4 @@ print(f"system_temp: {system_temp}%")
 json_string = json.dumps(data, indent=4)
 with open('data_string.json', 'w') as file:
     file.write(json_string)
+    #
