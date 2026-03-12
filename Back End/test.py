@@ -1,6 +1,7 @@
 import psutil
 import time
 import json
+import datetime
 
 psutil.cpu_percent(interval=None) #starts the call then waits so it works the next time
 time.sleep(1)
@@ -55,6 +56,11 @@ except AttributeError:
     print("psutil.sensors_temperatures() is not supported on this OS.")
 except Exception as e:
      print(f"An error occurred: {e}")
+
+# Time
+time_log = datetime.datetime.now()
+
+# Converting data into a JSON file
 data = {
     "cpu_percent": cpu_percent,
     "cpu_per_core": cpu_per_core,
@@ -69,7 +75,8 @@ data = {
     "read_bytes": read_bytes,
     "write_bytes": write_bytes,
     "cpu_temp": cpu_temp,
-    "system_temp": system_temp
+    "system_temp": system_temp,
+    "time_log": datetime.datetime.now()
 }
 print(f"CPU percent: {cpu_percent}%")
 print(f"CPU core percent: {cpu_per_core}%")
@@ -85,6 +92,7 @@ print(f"read_bytes: {read_bytes:.2f} GB")
 print(f"write_bytes: {write_bytes:.2f} GB")
 print(f"cpu_temp: {cpu_temp}%")
 print(f"system_temp: {system_temp}%")
+print(f"log time: {time_log}")
 
 json_string = json.dumps(data, indent=4)
 with open('data_string.json', 'w') as file:
