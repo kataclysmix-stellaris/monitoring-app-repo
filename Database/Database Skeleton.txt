@@ -1,0 +1,27 @@
+CREATE TABLE CPU (
+	CPU_percent INT,
+	CPU_core_percent INT,
+	CPU_frequency FLOAT
+);
+alt+F5
+CREATE TABLE RAM (
+	RAM_used FLOAT,
+	RAM_total FLOAT,
+	RAM_percent INT
+);
+alt+F5
+CREATE TABLE disk (
+	disk_used FLOAT,
+	disk_total FLOAT,
+	disk_percent INT,
+	read_bytes FLOAT,
+	write_bytes FLOAT
+);
+alt+F5
+CREATE TABLE thermal (
+	CPU_temp FLOAT,
+	system_temp FLOAT
+);
+alt+F5
+
+if you SELECT * FROM insert table name; alt+F5 you can see what the table looks like.
