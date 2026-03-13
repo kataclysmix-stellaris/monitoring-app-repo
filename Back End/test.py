@@ -58,7 +58,12 @@ except Exception as e:
      print(f"An error occurred: {e}")
 
 # Time
-time_log = (str)(datetime.datetime.now())
+Time = datetime.datetime.now()
+date_log = Time.strftime("%x")
+time_hour_log = Time.strftime("%I")
+time_minute_log = Time.strftime("%M")
+time_meridiem_log = Time.strftime("%p")
+time_log = (time_hour_log + ":" + time_minute_log + " " + time_meridiem_log)
 
 # Converting data into a JSON file
 data = {
@@ -76,6 +81,7 @@ data = {
     "write_bytes": write_bytes,
     "cpu_temp": cpu_temp,
     "system_temp": system_temp,
+    "date_log": date_log,
     "time_log": time_log
 }
 print(f"CPU percent: {cpu_percent}%")
