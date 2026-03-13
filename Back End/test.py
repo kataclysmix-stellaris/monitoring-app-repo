@@ -76,7 +76,7 @@ data = {
     "write_bytes": write_bytes,
     "cpu_temp": cpu_temp,
     "system_temp": system_temp,
-    "time_log": (str)(datetime.datetime.now())
+    "time_log": time_log
 }
 print(f"CPU percent: {cpu_percent}%")
 print(f"CPU core percent: {cpu_per_core}%")
