@@ -1,4 +1,3 @@
-// --- Login Page ---
 function login() {
     const user = document.getElementById("username").value;
     const pass = document.getElementById("password").value;
@@ -8,7 +7,7 @@ function login() {
         // Save user info in sessionStorage
         sessionStorage.setItem("loggedIn", "true");
         sessionStorage.setItem("username", user);
-        // Redirect to dashboard
+        // direct to dashboard
         window.location.href = "dashboard.html";
     } else {
         document.getElementById("error").innerText = "Invalid username or password.";
