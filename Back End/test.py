@@ -1,3 +1,6 @@
+#for this to work python must be installed and 
+#have a PATH and Pip(there should be a checkmark call eviromental path or something similar) for it
+
 import psutil #imports psutil is used to collect telemetry data
 import time #used to slow the file down for proper use
 import json #creates the file for api to bring to sql
