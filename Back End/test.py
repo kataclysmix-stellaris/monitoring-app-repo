@@ -11,14 +11,15 @@ import datetime #time gets the time for the json file so sql can use that to mak
 psutil.cpu_percent(interval=None) #starts the call then waits so it works the next time
 time.sleep(1)
 
-# CPU
+#CPU
+
 cpu_percent = psutil.cpu_percent(interval=1)
 
 cpu_per_core = psutil.cpu_percent(interval=1, percpu=True)
 
 cpu_freq = psutil.cpu_freq()._asdict()
 
-# RAM
+#RAM
 
 ram_used = (psutil.virtual_memory().used)/1073741824
 
@@ -28,7 +29,8 @@ ram_percent = psutil.virtual_memory().percent
 
 swap_percent = psutil.swap_memory().percent
 
-# Disk
+#Disk
+
 disk_data = {}
 
 for part in psutil.disk_partitions():
@@ -44,7 +46,8 @@ read_bytes = (psutil.disk_io_counters().read_bytes)/1073741824
 
 write_bytes = (psutil.disk_io_counters().write_bytes)/1073741824
 
-# Thermal
+#Thermal
+
 cpu_temp = None
 system_temp = None
 
@@ -62,7 +65,8 @@ except AttributeError:
 except Exception as e:
      print(f"An error occurred: {e}")
 
-# Time
+#Time
+
 Time = datetime.datetime.now()
 date_log = Time.strftime("%x")
 time_hour_log = Time.strftime("%I")
@@ -70,7 +74,8 @@ time_minute_log = Time.strftime("%M")
 time_meridiem_log = Time.strftime("%p")
 time_log = (time_hour_log + ":" + time_minute_log + " " + time_meridiem_log)
 
-# Converting data into a JSON file
+#Converting data into JSON
+
 data = {
     "cpu_percent": cpu_percent,
     "cpu_per_core": cpu_per_core,
@@ -89,6 +94,9 @@ data = {
     "date_log": date_log,
     "time_log": time_log
 }
+
+#For testing and easier to compare to the JSON file to see if everything is working how it should
+
 print(f"CPU percent: {cpu_percent}%")
 print(f"CPU core percent: {cpu_per_core}%")
 print(f"CPU freq: {cpu_freq}")
@@ -103,7 +111,10 @@ print(f"read_bytes: {read_bytes:.2f} GB")
 print(f"write_bytes: {write_bytes:.2f} GB")
 print(f"cpu_temp: {cpu_temp}%")
 print(f"system_temp: {system_temp}%")
-print(f"log time: {time_log}")
+print(f"date_log: {date_log}")
+print(f"time_log: {time_log}")
+
+#The actual JSON file and where the data will be placed
 
 json_string = json.dumps(data, indent=4)
 with open('data_string.json', 'w') as file:
