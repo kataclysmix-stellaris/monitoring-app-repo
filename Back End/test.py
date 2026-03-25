@@ -1,4 +1,5 @@
 import psutil
+import datetime
 import time
 import json
 
@@ -42,6 +43,11 @@ write_bytes = (psutil.disk_io_counters().write_bytes)/1073741824
 cpu_temp = None
 system_temp = None
 
+# Datetime - EB
+
+x=datetime.datetime.now()
+print()
+
 try:
     temps = psutil.sensors_temperatures()
     if not temps:
@@ -69,7 +75,8 @@ data = {
     "read_bytes": read_bytes,
     "write_bytes": write_bytes,
     "cpu_temp": cpu_temp,
-    "system_temp": system_temp
+    "system_temp": system_temp,
+    "date/time": x.strftime("%c")
 }
 print(f"CPU percent: {cpu_percent}%")
 print(f"CPU core percent: {cpu_per_core}%")
@@ -85,6 +92,7 @@ print(f"read_bytes: {read_bytes:.2f} GB")
 print(f"write_bytes: {write_bytes:.2f} GB")
 print(f"cpu_temp: {cpu_temp}%")
 print(f"system_temp: {system_temp}%")
+print(f"date/time: {x.strftime('%c')}")
 
 json_string = json.dumps(data, indent=4)
 with open('data_string.json', 'w') as file:
