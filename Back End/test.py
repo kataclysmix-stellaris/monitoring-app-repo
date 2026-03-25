@@ -1,7 +1,9 @@
-import psutil
-import time
-import json
-import datetime
+import psutil #imports psutil is used to collect telemetry data
+import time #used to slow the file down for proper use
+import json #creates the file for api to bring to sql
+import datetime #time gets the time for the json file so sql can use that to make a compound key or other method
+
+#if any of these are not recognised do "pip install name"
 
 psutil.cpu_percent(interval=None) #starts the call then waits so it works the next time
 time.sleep(1)
@@ -43,7 +45,7 @@ write_bytes = (psutil.disk_io_counters().write_bytes)/1073741824
 cpu_temp = None
 system_temp = None
 
-try:
+try:#temperture dose not work on windows with running in administrator so it give errors 
     temps = psutil.sensors_temperatures()
     if not temps:
          print("Temperature sensors not supported on this system or no data available.")
