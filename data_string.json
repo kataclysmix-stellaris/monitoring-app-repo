@@ -1,6 +1,6 @@
 {
     "cpu_percent": 10.4,
-    "cpu_per_core": [
+    "cpu_core_percent": [
         23.4,
         6.2,
         17.5,
@@ -18,7 +18,7 @@
         4.7,
         3.1
     ],
-    "cpu_freq": {
+    "cpu_frequency": {
         "current": 2500.0,
         "min": 0.0,
         "max": 2500.0
@@ -26,7 +26,6 @@
     "ram_used": 10.083610534667969,
     "ram_total": 31.635082244873047,
     "ram_percent": 31.9,
-    "swap_percent": 0.0,
     "disk_total": 474.71581649780273,
     "disk_used": 167.8001251220703,
     "disk_percent": 35.3,
@@ -34,6 +33,7 @@
     "write_bytes": 5.301387310028076,
     "cpu_temp": null,
     "system_temp": null,
-    "date_log": "03/25/26",
-    "time_log": "09:52 AM"
+    "user_name": Fizzlepop Berrytwist,
+    "user_password": BuckleMyShoe,
+    "user_id": mb9ArTshygw5WG4PS1fF9hP12CYmGzfH69GUPk3IhviTS2T0Vpdj4FbKXeevbdectK7v98axhBwBJkIpGsx4uxQhwdAg1mqW7sL3k4QW6gIzFoVkBDD4Gwk8EvdC2cyP
 }
