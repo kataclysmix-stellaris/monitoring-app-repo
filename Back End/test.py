@@ -31,16 +31,22 @@ swap_percent = psutil.swap_memory().percent
 
 #Disk
 
-disk_data = {}
+disk_data = []
 
 for part in psutil.disk_partitions():
     usage = psutil.disk_usage(part.mountpoint)
+    disk_data.append({
+        "mount": part.mountpoint,
+        "total": usage.total / 1073741824,
+        "used": usage.used / 1073741824,
+        "percent": usage.percent
+    })
 
-disk_total = (usage.total)/1073741824
+disk_total = sum(d["total"] for d in disk_data)
+disk_used = sum(d["used"] for d in disk_data)
 
-disk_used = (usage.used)/1073741824
-
-disk_percent = usage.percent
+# Weighted percent (more accurate than averaging)
+disk_percent = (disk_used / disk_total) * 100 if disk_total > 0 else 0
 
 read_bytes = (psutil.disk_io_counters().read_bytes)/1073741824
 
