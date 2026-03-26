@@ -1,8 +1,10 @@
+@import "tailwindcss";
+
 body {
             background-color: #1e2234;
             color: white;
             font-family: 'Times New Roman', Times, serif;
-            margin: 0;
+            margin-left: 10px;
     }
 
     .dashboard {
@@ -20,10 +22,10 @@ body {
         border-radius: 10px;
         padding-left: 15px;
         margin: 10px;
-        width: 300px;
-        height: 200px;
-        max-width: 300px;
-        max-height: 175px
+        width: 500px;
+        height: 300px;
+        max-width: 500px;
+        max-height: 300px
     }
 
     p {
@@ -36,14 +38,43 @@ body {
         font-weight: bold;
     }
 
-    .top {
+    .top, .bottom {
         display: flex;
-        justify-content: space-between;
-        width: 100%;
+        gap: 50px;              
+        justify-content: flex-start;
     }
 
-    .bottom {
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
+    button {
+        background-color: #95b2eb;
+        color: white;
+        margin-top: 25px;
+        padding: 15px 45px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
     }
+
+.top,
+.bottom {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.card {
+  flex: 1;
+  max-width: 300px;
+}
+
+@media (max-width: 768px) {
+  .top,
+  .bottom {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .card {
+    width: 90%;
+    max-width: none;
+  }
+}
