@@ -1,18 +1,25 @@
-import psutil
-import time
-import json
+#for this to work python must be installed and 
+#have a PATH and Pip(there should be a checkmark call eviromental path or something similar) for it
+
+import psutil #imports psutil is used to collect telemetry data
+import time #used to slow the file down for proper use
+import json #creates the file for api to bring to sql
+import datetime #time gets the time for the json file so sql can use that to make a compound key or other method
+
+#if any of these are not recognised do "pip install name"
 
 psutil.cpu_percent(interval=None) #starts the call then waits so it works the next time
 time.sleep(1)
 
-# CPU
+#CPU
+
 cpu_percent = psutil.cpu_percent(interval=1)
 
 cpu_per_core = psutil.cpu_percent(interval=1, percpu=True)
 
 cpu_freq = psutil.cpu_freq()._asdict()
 
-# RAM
+#RAM
 
 ram_used = (psutil.virtual_memory().used)/1073741824
 
@@ -22,27 +29,35 @@ ram_percent = psutil.virtual_memory().percent
 
 swap_percent = psutil.swap_memory().percent
 
-# Disk
-disk_data = {}
+#Disk
+
+disk_data = []
 
 for part in psutil.disk_partitions():
     usage = psutil.disk_usage(part.mountpoint)
+    disk_data.append({
+        "mount": part.mountpoint,
+        "total": usage.total / 1073741824,
+        "used": usage.used / 1073741824,
+        "percent": usage.percent
+    })
 
-disk_total = (usage.total)/1073741824
+disk_total = sum(d["total"] for d in disk_data)
+disk_used = sum(d["used"] for d in disk_data)
 
-disk_used = (usage.used)/1073741824
-
-disk_percent = usage.percent
+# Weighted percent (more accurate than averaging)
+disk_percent = (disk_used / disk_total) * 100 if disk_total > 0 else 0
 
 read_bytes = (psutil.disk_io_counters().read_bytes)/1073741824
 
 write_bytes = (psutil.disk_io_counters().write_bytes)/1073741824
 
-# Thermal
+#Thermal
+
 cpu_temp = None
 system_temp = None
 
-try:
+try:#temperture dose not work on windows with running in administrator so it give errors 
     temps = psutil.sensors_temperatures()
     if not temps:
          print("Temperature sensors not supported on this system or no data available.")
@@ -55,6 +70,18 @@ except AttributeError:
     print("psutil.sensors_temperatures() is not supported on this OS.")
 except Exception as e:
      print(f"An error occurred: {e}")
+
+#Time
+
+Time = datetime.datetime.now()
+date_log = Time.strftime("%x")
+time_hour_log = Time.strftime("%I")
+time_minute_log = Time.strftime("%M")
+time_meridiem_log = Time.strftime("%p")
+time_log = (time_hour_log + ":" + time_minute_log + " " + time_meridiem_log)
+
+#Converting data into JSON
+
 data = {
     "cpu_percent": cpu_percent,
     "cpu_per_core": cpu_per_core,
@@ -69,8 +96,13 @@ data = {
     "read_bytes": read_bytes,
     "write_bytes": write_bytes,
     "cpu_temp": cpu_temp,
-    "system_temp": system_temp
+    "system_temp": system_temp,
+    "date_log": date_log,
+    "time_log": time_log
 }
+
+#For testing and easier to compare to the JSON file to see if everything is working how it should
+
 print(f"CPU percent: {cpu_percent}%")
 print(f"CPU core percent: {cpu_per_core}%")
 print(f"CPU freq: {cpu_freq}")
@@ -85,8 +117,11 @@ print(f"read_bytes: {read_bytes:.2f} GB")
 print(f"write_bytes: {write_bytes:.2f} GB")
 print(f"cpu_temp: {cpu_temp}%")
 print(f"system_temp: {system_temp}%")
+print(f"date_log: {date_log}")
+print(f"time_log: {time_log}")
+
+#The actual JSON file and where the data will be placed
 
 json_string = json.dumps(data, indent=4)
 with open('data_string.json', 'w') as file:
     file.write(json_string)
-    #

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+    <h1>Monitoring Dashboard</h1>
+
+        <h2>Welcome, <span id="user"></span>!</h2>
+        <p id="message"></p>
+    
+            <div class="dashboard">
+                <div class="top">
+                    <div class="card">
+                        <h3>CPU Utilization</h3>
+                        <p>Temp:</p>
+                    </div>
+
+                    <div class="card">
+                        <h3>RAM Usage</h3>
+
+                    </div>
+
+                    <div class="card">
+                        <h3>Storage</h3>
+
+                    </div>
+
+                </div>
+
+                <div class="bottom">
+
+                    <div class="card">
+                        <h3>NAND</h3>
+
+                        <p>Type: </p>
+                        <p>Channel: </p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Thermal</h3>
+                    
+                    </div>
+
+                    <div class="card">
+                        <h3>Node Status</h3>
+                    
+                    </div>
+                </div>
+
+        <button type="button" onclick="logout()">Logout</button>
+    
+        <script src="script.js"></script>
+</body>
+
