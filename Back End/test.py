@@ -7,6 +7,9 @@ import json #creates the file for api to bring to sql
 import datetime #time gets the time for the json file so sql can use that to make a compound key or other method
 
 #if any of these are not recognised do "pip install name"
+#This will open a file with the node identification number to recognize which node the data is coming from
+with open("/mnt/c/Users/sneha/OneDrive/Documentos/GitHub/monitoring-app-repo/Back End/E.txt", "r") as id:
+    node_id = id.read().strip()
 
 psutil.cpu_percent(interval=None) #starts the call then waits so it works the next time
 time.sleep(1)#sleeps to make sure it working
@@ -85,6 +88,7 @@ time_log = (time_hour_log + ":" + time_minute_log + " " + time_meridiem_log)#com
 #Converting data into JSON
 
 data = {#uses all the data collected and converts it into a json file
+    "node_id": node_id,
     "cpu_percent": round(cpu_percent, 2),
     "cpu_per_core": cpu_per_core,
     "cpu_freq": cpu_freq,
@@ -105,6 +109,7 @@ data = {#uses all the data collected and converts it into a json file
 
 #For testing and easier to compare to the JSON file to see if everything is working how it should
 #this will be deleted when code is fully done
+print(f"node_id: {node_id}")
 print(f"CPU percent: {cpu_percent}%")
 print(f"CPU core percent: {cpu_per_core}%")
 print(f"CPU freq: {cpu_freq}")
