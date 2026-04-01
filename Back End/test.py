@@ -8,7 +8,7 @@ import datetime #time gets the time for the json file so sql can use that to mak
 
 #if any of these are not recognised do "pip install name"
 #This will open a file with the node identification number to recognize which node the data is coming from
-with open("/mnt/c/Users/sneha/OneDrive/Documentos/GitHub/monitoring-app-repo/Back End/E.txt", "r") as id:
+with open("/home/truenas_admin/projects/'Back End'/node_id.txt", "r") as id:
     node_id = id.read().strip()
 
 psutil.cpu_percent(interval=None) #starts the call then waits so it works the next time
