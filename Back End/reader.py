@@ -1,3 +1,12 @@
+#to have this code run correctly you need to:
+#in terminal run: pip install json
+#in terminal run: pip install time
+#in terminal run: pip install watchdog
+#then open file explorer go to the bar(the one with home on it)
+#then put in \\192.168.30.128\Apps
+#        username:better
+#        password:j
+
 import json
 import time
 from watchdog.observers import Observer
@@ -9,7 +18,7 @@ class JSONHandler(FileSystemEventHandler):
     def on_modified(self, event):
         if event.src_path.endswith("data_string.json"):
             try:
-                time.sleep(0.5)  # small delay to make sure file is done writing
+                time.sleep(0.5)  
                 with open(file_path, 'r') as file:
                     data = json.load(file)
 
