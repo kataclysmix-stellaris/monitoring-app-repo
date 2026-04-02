@@ -1,7 +1,14 @@
 @import "tailwindcss";
 
+:root{
+    font-size: 20px;
+    --bgTheme: #021d0d;
+    --inputBgTheme: oklch(from var(--mainContentBgTheme) calc(l * 3) c h);
+}
+
 body {
-            background-color: #1e2234;
+             background: linear-gradient(-60deg, var(--bgTheme), oklch(from var(--bgTheme) calc(l * 1.75) c h));
+    color: oklch(from var(--bgTheme) calc(l * 3) c h);
             color: white;
             font-family: 'Times New Roman', Times, serif;
             margin-left: 10px;
@@ -15,7 +22,7 @@ body {
     }
 
     .card {
-        background-color: #2a3657;
+        --mainContentColorTheme: oklch(from var(--mainContentBgTheme) calc(l * 2.5) c h);
         display: grid;
         display:grid;
         grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -44,15 +51,18 @@ body {
         justify-content: flex-start;
     }
 
-    button {
-        background-color: #95b2eb;
-        color: white;
-        margin-top: 25px;
-        padding: 15px 45px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
+    
+button {
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    background: oklch(from rgb(5, 44, 26) calc(l * 0.9) c h);
+    color: var(--inputBgTheme);
+    border: 0.15rem double rgba(255, 255, 255, 0.5);
+    transition: filter 0.2s ease, scale 0.2s ease;
+}
+
 
 .top,
 .bottom {
@@ -64,6 +74,20 @@ body {
 .card {
   flex: 1;
   max-width: 300px;
+}
+
+.input-container input:hover, .input-container input:focus{
+    background-color: oklch(from var(--inputBgTheme) calc(l * 0.95) calc(c * 1.5) h);
+}
+
+.input-container input:focus, form button:focus,
+.input-container input:hover, form button:hover {
+    outline: none;
+    scale: 1.05;
+}
+
+button:hover, button:focus{
+    filter: brightness(1.25);
 }
 
 @media (max-width: 768px) {
