@@ -1,39 +1,31 @@
 {
-    "cpu_percent": 10.4,
-    "cpu_core_percent": [
-        23.4,
-        6.2,
-        17.5,
-        3.2,
-        35.8,
-        3.1,
-        35.9,
-        6.2,
-        26.2,
-        3.1,
-        20.3,
-        1.6,
-        6.2,
-        4.7,
-        4.7,
-        3.1
+    "cpu_percent": 0.3,
+    "cpu_per_core": [
+        0.0,
+        1.0,
+        2.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        2.0
     ],
-    "cpu_frequency": {
-        "current": 2500.0,
-        "min": 0.0,
-        "max": 2500.0
+    "cpu_freq": {
+        "current": 800.04,
+        "min": 800.0,
+        "max": 4900.0
     },
-    "ram_used": 10.083610534667969,
-    "ram_total": 31.635082244873047,
-    "ram_percent": 31.9,
-    "disk_total": 474.71581649780273,
-    "disk_used": 167.8001251220703,
-    "disk_percent": 35.3,
-    "read_bytes": 7.750270843505859,
-    "write_bytes": 5.301387310028076,
-    "cpu_temp": null,
-    "system_temp": null,
-    "user_name": "Fizzlepop Berrytwist",
-    "user_password": "BuckleMyShoe",
-    "user_id": "mb9ArTshygw5WG4PS1fF9hP12CYmGzfH69GUPk3IhviTS2T0Vpdj4FbKXeevbdectK7v98axhBwBJkIpGsx4uxQhwdAg1mqW7sL3k4QW6gIzFoVkBDD4Gwk8EvdC2cyP"
+    "ram_used": 2.55,
+    "ram_total": 15.3,
+    "ram_percent": 16.7,
+    "swap_percent": 0.0,
+    "disk_total": 2198.6,
+    "disk_used": 0.3,
+    "disk_percent": 0.01,
+    "read_bytes": 0.47,
+    "write_bytes": 19.23,
+    "cpu_temp": 28.0,
+    "system_temp": 28.0,
+    "date_log": "04/02/26",
+    "time_log": "11:04 AM"
 }
