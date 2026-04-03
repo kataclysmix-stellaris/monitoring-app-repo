@@ -2,7 +2,7 @@
 
 :root{
     font-size: 20px;
-    --bgTheme: #021d0d;
+    --bgTheme: #110025;
     --inputBgTheme: oklch(from var(--mainContentBgTheme) calc(l * 3) c h);
 }
 
@@ -21,8 +21,12 @@ body {
         padding: 20px;
     }
 
+.graph-label {
+    color: #ffffff;
+}
+
     .card {
-        --mainContentColorTheme: oklch(from var(--mainContentBgTheme) calc(l * 2.5) c h);
+        --mainContentColorTheme: #0a000f;
         display: grid;
         display:grid;
         grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -57,9 +61,9 @@ button {
     padding: 0.5rem 1rem;
     border-radius: 10px;
     cursor: pointer;
-    background: oklch(from rgb(5, 44, 26) calc(l * 0.9) c h);
+    background: oklch(from rgb(9, 5, 44) calc(l * 0.9) c h);
     color: var(--inputBgTheme);
-    border: 0.15rem double rgba(255, 255, 255, 0.5);
+    border: 0.15rem double rgba(0, 9, 141, 0.5);
     transition: filter 0.2s ease, scale 0.2s ease;
 }
 
