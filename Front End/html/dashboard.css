@@ -21,10 +21,6 @@ body {
         padding: 20px;
     }
 
-.graph-label {
-    color: #ffffff;
-}
-
     .card {
         --mainContentColorTheme: #0a000f;
         display: grid;
