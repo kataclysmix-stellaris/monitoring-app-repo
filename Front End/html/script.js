@@ -2,12 +2,27 @@
 // fetch('/path/to/data_string.json').then(r => r.json()).then(d => { /* use d */ });
 
 const data = {
-    cpu_percent: 10.4,
-    cpu_core_percent: [23.4, 6.2, 17.5, 3.2, 35.8, 3.1, 35.9, 6.2,
-        26.2, 3.1, 20.3, 1.6, 6.2, 4.7, 4.7, 3.1],
-    ram_used: 10.083610534667969,
-    ram_percent: 31.9,
-    disk_percent: 35.3
+
+    cpu_percent: 0.3,
+
+    cpu_core_percent: [
+        0.0,
+        1.0,
+        2.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        2.0
+    ],
+
+    ram_percent: 16.7,
+
+    disk_percent: 0.01,
+
+    cpu_temp: 28.0,
+    
+    system_temp: 28.0,
 };
 
 const ctx = document.getElementById('cpuChart');
