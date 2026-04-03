@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>System Monitor Simulation</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h2>System Monitor (Simulated Data)</h2>
+
+  <div style="display: flex; gap: 10px;">
+<canvas id="cpuChart" width="300" height="150"></canvas>
+<canvas id="gpuChart" width="300" height="150"></canvas>
+<canvas id="storageChart" width="300" height="150"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  function createChart(ctx, label, color) {
+    return new Chart(ctx, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label, data: [], borderColor: color, fill: false }] },
+      options: { animation: false, scales: { y: { min: 0, max: 100 } } }
+    });
+  }
+
+  const cpuChart = createChart(document.getElementById('cpuChart').getContext('2d'), 'CPU %', 'red');
+  const gpuChart = createChart(document.getElementById('gpuChart').getContext('2d'), 'GPU %', 'purple');
+  const storageChart = createChart(document.getElementById('storageChart').getContext('2d'), 'Storage %', 'blue');
+
+
+async function updateCharts() {
+  // Fetch real data from backend
+  const res = await fetch('/stats');
+  const data = await res.json();
+  const time = new Date().toLocaleTimeString();
+
+  // Update CPU chart
+  cpuChart.data.labels.push(time);
+  cpuChart.data.datasets[0].data.push(data.cpu);
+
+  // Update GPU chart
+  gpuChart.data.labels.push(time);
+  gpuChart.data.datasets[0].data.push(data.gpu);
+
+  // Update Storage chart
+  storageChart.data.labels.push(time);
+  storageChart.data.datasets[0].data.push(data.storage);
+
+  // Keep only the last 20 points
+  [cpuChart, gpuChart, storageChart].forEach(chart => {
+    if(chart.data.labels.length > 20){
+      chart.data.labels.shift();
+      chart.data.datasets[0].data.shift();
+    }
+    chart.update();
+  });
+}
+  setInterval(updateCharts, 1000);
+</script>
