@@ -1,75 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="dashboard.css">
+
+    <title>System Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        body { 
+            font-family: sans-serif;
+            padding: 20px;
+            background-color: #1c2029;
+        }
+
+        h1, h2 { 
+            margin: 0 0 10px;
+            color: white;
+        }
+
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .card {
+            padding: 10px;
+            border-radius: 25px;
+            width: 400px; 
+        }
+        canvas { 
+            background-color: #e6f2ff;
+            border-radius: 5px; 
+        }
+
+    </style>
 </head>
+
 <body>
-    <h1>Dashboard</h1>
-    <p>Welcome, <span id="user"></span>!</p>
+        <h1>Monitoring Dashboard</h1>
+        
+            <h2>Welcome, <span id="user"></span>!</h2>
+            <p id="message"></p> <div class="dashboard">
+                
+                <div class="top">
 
-    <button id="editBtn">Edit Dashboard</button>
+                <div class="card">
+                    <h3>CPU Utilization</h3> 
+                    <canvas id="cpuChart" height="150"></canvas>
+                </div> 
+                
+                <div class="card">     
+                    <h3>RAM Usage</h3>
+                    <canvas id="ramChart" height="150"></canvas>
+                </div>
+                
+                <div class="card">
+                    <h3>Storage</h3>
+                    <canvas id="storageChart" height="150"></canvas>
+                </div> 
+            </div>
+        </div> 
+        
+        <div class="bottom">
+            <div class="card">
+                <h3>NAND</h3>
+                <p>Type: </p>
+                <p>Channel: </p>
+            </div> 
+            
+            <div class="card">
+                <h3>Thermal</h3> 
+            </div>
+            
+            <div class="card"> 
+                <h3>Node Status</h3>
+            </div> 
+        </div>
 
-    <p id="message"></p>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        // 30 seconds in milliseconds
+        const intervalMs = 30 * 1000; 30000;
+    </script>
 
-    <button onclick="logout()">Logout</button>
+    <button type="button" onclick="logout()">Logout</button>
 
     <script src="script.js"></script>
-    <br>
-    <div class="card">
-  <h3>CPU</h3>
-  <svg width="300" height="120">
-    <polyline 
-      fill="none" 
-      stroke="#4aa3ff" 
-      stroke-width="3"
-      points="0,80 40,60 80,70 120,40 160,60 200,30 240,50 280,20" />
-  </svg>
-</div>
-
-<style>
-.card {
-  max-width: 400px;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-family: sans-serif;
-  float:left;
-  margin:90px;
-
-}
-</style>
-<div class="card">
-  <h3>Memory</h3>
-  <svg width="300" height="120">
-    <polyline 
-      fill="none" 
-      stroke="green" 
-      stroke-width="3"
-      points="0,60 40,58 80,62 120,59 160,61 200,60 240,58 280,61" />
-  </svg>
-</div>
-<div class="card">
-  <h3>Storage</h3>
-  <div class="pie"></div>
-</div>
-
-<style>
-.pie {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  background: conic-gradient(
-    gold 0% 10%,
-    skyblue 10% 35%,
-    lightcoral 35% 100%
-  );
-  margin: 10px auto;
-  transform: scaleX(-1);
-}
-</style>
-
-</body>
 </html>
