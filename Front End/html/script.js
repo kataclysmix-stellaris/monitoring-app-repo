@@ -13,12 +13,12 @@ const data = {
 const ctx = document.getElementById('cpuChart');
 
 const cpuChart = new Chart(ctx, {
-    type: 'line', // or 'bar' if you prefer
+    type: 'line',
     data: {
         labels: Array.from({ length: 16 }, (_, i) => `Core ${i}`),
         datasets: [{
             label: 'CPU % per Core',
-            data: data.cpu_core_percent, // use real data
+            data: data.cpu_core_percent,
             borderColor: 'blue',
             backgroundColor: 'rgba(0, 0, 255, 0.1)',
             fill: true
