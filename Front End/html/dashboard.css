@@ -2,13 +2,13 @@
 
 :root{
     font-size: 20px;
-    --bgTheme: #110025;
+    --bgTheme: #2c0735;
     --inputBgTheme: oklch(from var(--mainContentBgTheme) calc(l * 3) c h);
 }
 
 body {
              background: linear-gradient(-60deg, var(--bgTheme), oklch(from var(--bgTheme) calc(l * 1.75) c h));
-    color: oklch(from var(--bgTheme) calc(l * 3) c h);
+        color: oklch(from var(--bgTheme) calc(l * 3) c h);
             color: white;
             font-family: 'Times New Roman', Times, serif;
             margin-left: 10px;
