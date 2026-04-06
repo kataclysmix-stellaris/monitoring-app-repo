@@ -14,9 +14,19 @@
   }
   h2, h3, h4 {
     color:black;
+    margin-left:37px;
   }
   td {
     border:black 2px solid;
+  }
+  h1 {
+    color:black;
+  }
+  h2 {
+    text-decoration:underline lightgray;
+  }
+  .full-width {
+    margin:auto;
   }
 </style>
 
@@ -31,13 +41,15 @@
 
     <table class="full-width">
       <tr>
-    <h2>Welcome (Username)</h2>
+    <td colspan="3"><h1>Welcome (Username)</h1></td>
       </tr>
       <tr>
-        <td colspan="1"><h2>Dashboard</h2></td>
+        <td colspan="1"><h1>Dashboard</h1></td>
+        <td><h1 align="center">Graphs</h1></td>
       </tr>
       <tr>
         <td colspan="1"><h2>System</h2><br><h3>Node 1</h3><br><h3>Node 2</h3><br><h4>VM 1</h4><br><h4>VM 2</h4><br><h4>VM 3</h4><br><h4>VM 4</h4><br><h3>Node 3</h3></td>
+        <td rowspan="7" width="1000px"></td>
       </tr>
     </table>
 
