@@ -15,12 +15,22 @@ from watchdog.events import FileSystemEventHandler
 file_path = r"\\192.168.30.128\Apps\data_string.json"
 
 class JSONHandler(FileSystemEventHandler):
+    def __init__(self):
+        self._last_triggered = 0
+
     def on_modified(self, event):
-        if event.src_path.endswith("data_string.json"):
-            try:
-                time.sleep(0.5)  
-                with open(file_path, 'r') as file:
-                    data = json.load(file)
+        if not event.src_path.endswith("data_string.json"):
+            return
+        
+        now = time.time()
+        if now - self._last_triggered < 1.0: 
+            return
+        self._last_triggered = now
+
+        try:
+            time.sleep(0.5)
+            with open(file_path, 'r') as file:
+                data = json.load(file)
 
                 print(f"--- {data['date_log']} {data['time_log']} ---")
                 print(f"CPU percent: {data['cpu_percent']}%")
@@ -39,10 +49,11 @@ class JSONHandler(FileSystemEventHandler):
                 print(f"System temp: {data['system_temp']}")
                 print("-----------------------------------")
 
-            except Exception as e:
-                print(f"Error reading file: {e}")
+        except Exception as e:
+            print(f"Error reading file: {e}")
 
     time.sleep(1)
+
 
 if __name__ == "__main__":
     watch_path = r"\\192.168.30.128\Apps"
