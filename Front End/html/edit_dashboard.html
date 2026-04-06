@@ -8,7 +8,16 @@
 </head>
 
 <style>
-
+  table {
+    border:black 2px solid;
+    border-collapse: collapse;
+  }
+  h2, h3, h4 {
+    color:black;
+  }
+  td {
+    border:black 2px solid;
+  }
 </style>
 
 <body>
@@ -19,8 +28,19 @@
 
     <p id="message"></p>
 
-    <button onclick="logout()">Logout</button>
-    
 
+    <table class="full-width">
+      <tr>
+    <h2>Welcome (Username)</h2>
+      </tr>
+      <tr>
+        <td colspan="1"><h2>Dashboard</h2></td>
+      </tr>
+      <tr>
+        <td colspan="1"><h2>System</h2><br><h3>Node 1</h3><br><h3>Node 2</h3><br><h4>VM 1</h4><br><h4>VM 2</h4><br><h4>VM 3</h4><br><h4>VM 4</h4><br><h3>Node 3</h3></td>
+      </tr>
+    </table>
+
+    <button onclick="logout()">Logout</button>
 </body>
 </html>
