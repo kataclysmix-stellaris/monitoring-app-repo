@@ -47,41 +47,48 @@
             <div class="dashboard">
                 <div class="top">
 
-                <div class="card">
-                    <h3>CPU Utilization</h3> 
-                    <canvas id="cpuChart" height="150"></canvas>
-                </div> 
-                
-                <div class="card">     
-                    <h3>RAM Usage</h3>
-                    <canvas id="ramChart" height="150"></canvas>
+                    <div class="card">
+                        <h3>CPU Utilization</h3> 
+                        <canvas id="cpuChart" height="150"></canvas>
+                    </div> 
+                    
+                    <div class="card">     
+                        <h3>RAM Usage</h3>
+                        <canvas id="ramChart" height="150"></canvas>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>Storage</h3>
+                        <canvas id="storageChart" height="150"></canvas>
+                    </div> 
+
                 </div>
-                
-                <div class="card">
-                    <h3>Storage</h3>
-                    <canvas id="storageChart" height="150"></canvas>
-                </div> 
-            </div>
             
-            <div class="bottom">
-                <div class="card">
-                    <h3>NAND</h3>
-                    <p>Type: </p>
-                    <p>Channel: </p>
-                </div> 
-                
-                <div class="card">
-                    <h3>Thermal</h3> 
+                <div class="bottom">
+
+                    <div class="card">
+                        <h3>NAND</h3>
+                        <p>Type: </p>
+                        <p>Channel: </p>
+                    </div> 
+                    
+                    <div class="card">
+                        <h3>Thermal</h3> 
+                    </div>
+                    
+                    <div class="card"> 
+                        <h3>Node Status</h3>
+                    </div> 
+
                 </div>
-                
-                <div class="card"> 
-                    <h3>Node Status</h3>
-                </div> 
-            </div>
-            <div style="display: flex;">
-            <button type="button" onclick="logout()">Logout</button>
-            </div>
-        </div> 
+
+                <div style="display: flex; justify-content: end;">
+
+                    <button type="button" onclick="logout()">Logout</button>
+
+                </div>
+
+            </div> 
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
