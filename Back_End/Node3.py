@@ -83,8 +83,9 @@ Time = datetime.datetime.now()#grabs full time
 date_log = Time.strftime("%x")#gets Local version of dat ei 12/31/18
 time_hour_log = Time.strftime("%I")#grabs hour 00-12
 time_minute_log = Time.strftime("%M")#grabs minute 00-59
+time_second_log = Time.strftime("%S")
 time_meridiem_log = Time.strftime("%p")#gets wether its AM or PM
-time_log = (time_hour_log + ":" + time_minute_log + " " + time_meridiem_log)#combines them all into a understadable time log
+time_log = (time_hour_log + ":" + time_minute_log + "." + time_second_log + " " +time_meridiem_log)#combines them all into a understadable time log
 
 #Converting data into JSON
 
