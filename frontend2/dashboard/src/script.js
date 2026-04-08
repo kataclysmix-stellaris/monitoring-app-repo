@@ -1,5 +1,7 @@
 // Removed invalid import; if you need to load JSON at runtime, use fetch:
 // fetch('/path/to/data_string.json').then(r => r.json()).then(d => { /* use d */ });
+// Kat: What's d supposed to represent? And what's the backup plan if it breaks?
+// Kat: I recommend we reassess our options on functions and have more flexibility.
 
 const data = {
 
