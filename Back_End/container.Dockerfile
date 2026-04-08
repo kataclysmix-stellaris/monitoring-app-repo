@@ -1,8 +1,12 @@
-FROM python:3.11-slim
+FROM python:3.11
 
-WORKDIR /app
+# Create the destination directory
+RUN mkdir -p "/app/Back_End"
 
-COPY test.py .
-COPY data_string.json .
+# Copy your files into the container
+COPY Node3.py "/app/Back_End/Node3.py"
+COPY data_string.json "/app/Back_End/data_string.json"
 
-CMD [ "python", "test.py" ]
+WORKDIR "/app/Back_End"
+
+CMD ["python", "Node3.py"]
