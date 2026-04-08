@@ -1,0 +1,39 @@
+{
+    "cpu_percent": 7.4,
+    "cpu_per_core": [
+        9.4,
+        1.6,
+        6.2,
+        3.1,
+        1.6,
+        1.6,
+        0.0,
+        26.9,
+        29.9,
+        0.0,
+        17.5,
+        0.0,
+        3.1,
+        4.8,
+        0.0,
+        0.0
+    ],
+    "cpu_freq": {
+        "current": 2500.0,
+        "min": 0.0,
+        "max": 2500.0
+    },
+    "ram_used": 12.97,
+    "ram_total": 31.64,
+    "ram_percent": 41.0,
+    "swap_percent": 0.7,
+    "disk_total": 474.72,
+    "disk_used": 172.97,
+    "disk_percent": 36.44,
+    "read_bytes": 53.56,
+    "write_bytes": 39.42,
+    "cpu_temp": null,
+    "system_temp": null,
+    "date_log": "04/08/26",
+    "time_log": "10:37.28 AM"
+}
