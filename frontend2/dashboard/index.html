@@ -11,12 +11,11 @@
     <style>
         body { 
             padding: 20px;
-            background-color: #1c2029;
+            background-color: #7f96ca;
         }
 
         h1, h2 { 
             margin: 0 0 10px;
-            color: white;
         }
 
         .dashboard {
@@ -32,10 +31,8 @@
         }
         canvas { 
             background-color: #4e148c;
-            border-radius: 5px; 
-            border-style: double;
-            border-color: white;
-            
+            border-radius: 5px;
+            border: 2px solid rgba(255,255,255,0.55);
         }
 
     </style>
@@ -45,8 +42,8 @@
         <h1>Monitoring Dashboard</h1>
         
             <h2>Welcome, <span id="user"></span>!</h2>
-            <p id="message"></p> <div class="dashboard">
-                
+            <p id="message"></p> 
+            <div class="dashboard">
                 <div class="top">
 
                 <div class="card">
@@ -64,23 +61,24 @@
                     <canvas id="storageChart" height="150"></canvas>
                 </div> 
             </div>
-        </div> 
-        
-        <div class="bottom">
-            <div class="card">
-                <h3>NAND</h3>
-                <p>Type: </p>
-                <p>Channel: </p>
-            </div> 
             
-            <div class="card">
-                <h3>Thermal</h3> 
+            <div class="bottom">
+                <div class="card">
+                    <h3>NAND</h3>
+                    <p>Type: </p>
+                    <p>Channel: </p>
+                </div> 
+                
+                <div class="card">
+                    <h3>Thermal</h3> 
+                </div>
+                
+                <div class="card"> 
+                    <h3>Node Status</h3>
+                </div> 
             </div>
-            
-            <div class="card"> 
-                <h3>Node Status</h3>
-            </div> 
-        </div>
+            <button type="button" onclick="logout()">Logout</button>
+        </div> 
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -89,7 +87,8 @@
         const intervalMs = 30 * 1000; 30000;
     </script>
 
-    <button type="button" onclick="logout()">Logout</button>
 
-    <script src="script.js"></script>
+    <script type="module" src="./src/main.js"></script>
+    <script src="./src/script.js"></script>
+</body>
 </html>

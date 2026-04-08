@@ -2,15 +2,15 @@
 
 :root{
     font-size: 20px;
-    --bgTheme: #021d0d;
+    --bgTheme: #2c0735;
     --inputBgTheme: oklch(from var(--mainContentBgTheme) calc(l * 3) c h);
 }
 
 body {
              background: linear-gradient(-60deg, var(--bgTheme), oklch(from var(--bgTheme) calc(l * 1.75) c h));
-    color: oklch(from var(--bgTheme) calc(l * 3) c h);
+        color: oklch(from var(--bgTheme) calc(l * 3) c h);
             color: white;
-            font-family: 'Times New Roman', Times, serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             margin-left: 10px;
     }
 
@@ -22,7 +22,7 @@ body {
     }
 
     .card {
-        --mainContentColorTheme: oklch(from var(--mainContentBgTheme) calc(l * 2.5) c h);
+        --mainContentColorTheme: #0a000f;
         display: grid;
         display:grid;
         grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
@@ -57,10 +57,10 @@ button {
     padding: 0.5rem 1rem;
     border-radius: 10px;
     cursor: pointer;
-    background: oklch(from rgb(5, 44, 26) calc(l * 0.9) c h);
-    color: var(--inputBgTheme);
-    border: 0.15rem double rgba(255, 255, 255, 0.5);
+    background: #4e148c;
+    border: 0.15rem double #97dffc;
     transition: filter 0.2s ease, scale 0.2s ease;
+    color: white;
 }
 
 

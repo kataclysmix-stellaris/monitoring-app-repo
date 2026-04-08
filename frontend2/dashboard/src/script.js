@@ -6,19 +6,19 @@ const data = {
     cpu_percent: 0.3,
 
     cpu_core_percent: [
-        0.0,
         1.0,
-        2.0,
-        0.0,
-        0.0,
-        1.0,
-        1.0,
-        2.0
+        93.0,
+        23.0,
+        54.0,
+        70.0,
+        19.0,
+        70.0,
+        67.0
     ],
 
-    ram_percent: 16.7,
+    ram_percent: 80.7,
 
-    disk_percent: 0.01,
+    disk_percent: 4.01,
 
     cpu_temp: 28.0,
     
