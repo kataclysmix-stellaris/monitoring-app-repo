@@ -4,15 +4,11 @@
     <title>Dashboard</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="src/style.css">
+    <link rel="stylesheet" href="src/KatStyle.css">
 
     <title>System Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
-        body { 
-            padding: 20px;
-            background-color: #7f96ca;
-        }
 
         h1, h2 { 
             margin: 0 0 10px;
@@ -34,6 +30,7 @@
             background-color: #4e148c;
             border-radius: 5px;
             border: 2px solid rgba(255,255,255,0.55);
+            color: aliceblue;
         }
 
     </style>
@@ -74,13 +71,13 @@
                     
                     <div class="card">
                         <h3>Thermal</h3>
-                        <p>CPU Temperature: <span class="text-orange-400" id="cpu-temp"></span></p>
-                        <p>System Temperature: <span class="text-blue-300" id="sys-temp"></span></p>
+                        <p>CPU Temperature: <span class="text-orange-400" id="cpu-temp">65°F</span></p>
+                        <p>System Temperature: <span class="text-blue-300" id="sys-temp">80°F</span></p>
                     </div>
                     
                     <div class="card"> 
                         <h3>Node Status:</h3>
-                <div class="logout-container">
+                        <p class="text-2xl text-lime-600"></p>
                     </div> 
 
                 </div>
