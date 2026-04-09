@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+:root{
+  --cobalt-blue-50: #e9eefc;
+  --cobalt-blue-100: #d3ddf8;
+  --cobalt-blue-200: #a6bcf2;
+  --cobalt-blue-300: #7a9aeb;
+  --cobalt-blue-400: #4e78e4;
+  --cobalt-blue-500: #2157de;
+  --cobalt-blue-600: #1b45b1;
+  --cobalt-blue-700: #143485;
+  --cobalt-blue-800: #0d2359;
+  --cobalt-blue-900: #07112c;
+  --cobalt-blue-950: #050c1f; 
+}
