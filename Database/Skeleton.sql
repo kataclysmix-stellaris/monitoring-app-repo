@@ -33,6 +33,8 @@
 -- pgcrypto here ensures compatibility across versions.
 -- =====================================================
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS pg_partman;
+CREATE EXTENSION IF NOT EXISTS pg_cron;
 
 
 -- =====================================================
@@ -116,12 +118,12 @@ CREATE TABLE public.cpu (
     row_id              INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     cpu_percent         FLOAT           NOT NULL,
     cpu_core_per        JSONB           NOT NULL DEFAULT '[]',
-    cpu_frequency       FLOAT           NOT NULL,
+    cpu_frequency       JSONB           NOT NULL,
     user_id             UUID,
     node_id             UUID,
     recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_cpu_node FOREIGN KEY (node_id) REFERENCES public.nodes(id)
-);
+) PARTITION BY RANGE (recorded_at);
 
 CREATE TABLE public.disk (
     row_id              INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -134,19 +136,19 @@ CREATE TABLE public.disk (
     node_id             UUID,
     recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_disk_node FOREIGN KEY (node_id) REFERENCES public.nodes(id)
-);
+) PARTITION BY RANGE (recorded_at);
 
 CREATE TABLE public.ram (
     row_id              INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     ram_used            FLOAT           NOT NULL,
     ram_total           FLOAT           NOT NULL,
     ram_per             FLOAT         NOT NULL,
-    swap_per            FLOAT
+    swap_per            FLOAT,
     user_id             UUID,
     node_id             UUID,
     recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_ram_node FOREIGN KEY (node_id) REFERENCES public.nodes(id)
-);
+) PARTITION BY RANGE (recorded_at);
 
 CREATE TABLE public.thermal (
     row_id              INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -156,7 +158,7 @@ CREATE TABLE public.thermal (
     node_id             UUID,
     recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_thermal_node FOREIGN KEY (node_id) REFERENCES public.nodes(id)
-);
+) PARTITION BY RANGE (recorded_at);
 
 CREATE TABLE public.vms (
     row_id          INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -165,7 +167,7 @@ CREATE TABLE public.vms (
     recorded_at     TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     vm_id           VARCHAR(255)    NOT NULL,  
     vm_name         VARCHAR(255)    NOT NULL,
-    type            VARCHAR(50)     NOT NULL DEFAULT 'vm' CHECK (vm_type IN ('vm','container','wsl')),
+    vm_type            VARCHAR(50)     NOT NULL DEFAULT 'vm' CHECK (vm_type IN ('vm','container','wsl')),
     status          VARCHAR(50)     NOT NULL CHECK (status IN ('Running','Stopped','Paused','Unknown')),
     cpu_percent     FLOAT           NOT NULL DEFAULT 0,
     ram_used_gb     FLOAT           NOT NULL DEFAULT 0,
@@ -337,7 +339,7 @@ CREATE POLICY thermal_rls_policy ON public.thermal
     );
 
 -- Virtual Machine policy
-CREATE POLICY thermal_rls_policy ON public.vms
+CREATE POLICY vm_rls_policy ON public.vms
     AS PERMISSIVE
     FOR ALL
     USING (
@@ -503,7 +505,7 @@ GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO app_user;
 GRANT SELECT ON public.audit_log    TO auditor_user;
 GRANT SELECT ON public.sessions     TO auditor_user;
 GRANT SELECT ON public.mfa_config   TO auditor_user;
-DENY  SELECT, INSERT, UPDATE, DELETE ON public.vms TO auditor_user;
+REVOKE SELECT, INSERT, UPDATE, DELETE ON public.vms TO auditor_user;
 -- No access to telemetry, users, or nodes
 
 -- -----------------------------------------------
