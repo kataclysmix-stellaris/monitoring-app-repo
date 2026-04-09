@@ -11,6 +11,7 @@
     <script src="../node_modules/flowbite/dist/flowbite.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.46.0/dist/apexcharts.min.js"></script>
     <style>
+
         body { 
             padding: 20px;
             background-color: #1c2029;
@@ -45,6 +46,8 @@
 
 <body>
         <h1>Monitoring Dashboard</h1>
+
+    <script src="script.js"></script>
         
             <h2>Welcome, <span id="user"></span>!</h2>
             <p id="message"></p> <div class="dashboard">
@@ -52,18 +55,21 @@
                 <div class="top">
 
                 <div class="card">
-                    <h3>CPU Utilization</h3> 
-                    <canvas id="cpuChart" height="150"></canvas>
+                    <h3>CPU Utilization</h3>
+
+                    <div id="cpuChart" height="150"></div>
                 </div> 
                 
                 <div class="card">     
                     <h3>RAM Usage</h3>
-                    <canvas id="ramChart" height="150"></canvas>
+
+                    <div id="ramChart" height="150"></div>
                 </div>
                 
                 <div class="card">
                     <h3>Storage</h3>
-                    <canvas id="storageChart" height="150"></canvas>
+
+                    <div id="storageChart" height="150"></div>
                 </div> 
             </div>
         </div> 
@@ -74,10 +80,6 @@
                 <p>Type: </p>
                 <p>Channel: </p>
             </div> 
-            
-            <div class="card">
-                <h3>Thermal</h3> 
-            </div>
             
             <div class="card"> 
                 <h3>Node Status</h3>
@@ -93,10 +95,6 @@
 
     <button type="button" onclick="logout()">Logout</button>
 
-    <script src="script.js"></script>
-
-    <div class="bg-red-500 text-white p-4">
-  Tailwind is working
 </div>
 
 </body>
