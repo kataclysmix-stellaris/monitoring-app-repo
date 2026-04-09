@@ -33,6 +33,7 @@
 -- pgcrypto here ensures compatibility across versions.
 -- =====================================================
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS pg_partman;
 
 
 -- =====================================================
