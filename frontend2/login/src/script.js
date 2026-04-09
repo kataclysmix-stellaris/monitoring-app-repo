@@ -58,18 +58,36 @@ function moveToButtonClick (moveTo) {
 
 function submitForm(event) {
     event.preventDefault();
+    
+    const username = document.getElementById("usernameInput")?.value;
+    const password = document.getElementById("passwordInput")?.value;
 
+    if (!username || !password) {
+        alert("username and password are required");
+        return;
+    }
+
+    if (username.includes(' ') || password.includes(' ')) {
+        alert("username and password cannot contain spaces");
+        return;
+    }
+
+    if (password.length < 8) {
+        alert("password must be at least 8 or more characters");
+        return;
+    }
+
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+
+    const user = users.find(user => user.username === username);
+
+    if (!user) {
+        alert("user does not exist");
+        return;
+    }
+
+    if (user.password !== password) {
+        alert("incorrect password");
+        return;
+    }
 }
-
-// Password-Length = 8
-// event.preventDefault();
-// .includes(' ')
-// return 
-
-// Password must be 8 character long or more 
-// Password & username must not contain spaces
-// Password and username must be filled out
-// Username doesnt already exist. 
-
-// check if user even exists
-// For login check if password matches the users password
