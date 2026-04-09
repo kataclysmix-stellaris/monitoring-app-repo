@@ -116,7 +116,7 @@ CREATE TABLE public.cpu (
     row_id              INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     cpu_percent         FLOAT           NOT NULL,
     cpu_core_per        JSONB           NOT NULL DEFAULT '[]',
-    cpu_frequency       FLOAT           NOT NULL,
+    cpu_frequency       JSONB           NOT NULL,
     user_id             UUID,
     node_id             UUID,
     recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
