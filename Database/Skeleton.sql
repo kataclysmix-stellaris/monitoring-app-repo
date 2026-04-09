@@ -115,10 +115,11 @@ CREATE TABLE public.nodes (
 CREATE TABLE public.cpu (
     row_id              INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     cpu_percent         FLOAT           NOT NULL,
-    cpu_core_percent    INT             NOT NULL,
+    cpu_core_per        JSONB           NOT NULL DEFAULT '[]',
     cpu_frequency       FLOAT           NOT NULL,
     user_id             UUID,
     node_id             UUID,
+    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_cpu_node FOREIGN KEY (node_id) REFERENCES public.nodes(id)
 );
 
@@ -131,6 +132,7 @@ CREATE TABLE public.disk (
     write_bytes         FLOAT           NOT NULL,
     user_id             UUID,
     node_id             UUID,
+    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_disk_node FOREIGN KEY (node_id) REFERENCES public.nodes(id)
 );
 
@@ -138,9 +140,11 @@ CREATE TABLE public.ram (
     row_id              INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     ram_used            FLOAT           NOT NULL,
     ram_total           FLOAT           NOT NULL,
-    ram_percent         INT             NOT NULL,
+    ram_per             FLOAT         NOT NULL,
+    swap_per            FLOAT
     user_id             UUID,
     node_id             UUID,
+    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_ram_node FOREIGN KEY (node_id) REFERENCES public.nodes(id)
 );
 
@@ -150,28 +154,28 @@ CREATE TABLE public.thermal (
     system_temp         FLOAT           NOT NULL,
     user_id             UUID,
     node_id             UUID,
+    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_thermal_node FOREIGN KEY (node_id) REFERENCES public.nodes(id)
 );
 
+CREATE TABLE public.vms (
+    row_id          INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    node_id         UUID            NOT NULL REFERENCES public.nodes(id),
+    user_id         UUID,           
+    recorded_at     TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    vm_id           VARCHAR(255)    NOT NULL,  
+    vm_name         VARCHAR(255)    NOT NULL,
+    type            VARCHAR(50)     NOT NULL DEFAULT 'vm' CHECK (vm_type IN ('vm','container','wsl')),
+    status          VARCHAR(50)     NOT NULL CHECK (status IN ('Running','Stopped','Paused','Unknown')),
+    cpu_percent     FLOAT           NOT NULL DEFAULT 0,
+    ram_used_gb     FLOAT           NOT NULL DEFAULT 0,
+    ram_demand_gb   FLOAT           NOT NULL DEFAULT 0,
+    uptime          VARCHAR(100),   
+    creation_time   TIMESTAMPTZ
+    );
+    
 
--- =====================================================
--- BLOCK 4: HELPER FUNCTIONS
---
--- Key difference from SQL Server:
---   SESSION_CONTEXT(N'user_id')
---   -> current_setting('app.user_id', true)
---
--- The second argument TRUE means "missing_ok" —
--- returns NULL instead of error if not set.
--- Your backend must call:
---   SET LOCAL app.user_id = '<uuid>';
--- at the start of every transaction.
---
--- PostgreSQL functions use $$ body delimiters
--- and specify language (plpgsql or sql).
--- =====================================================
 
--- Returns the current session user's ID
 CREATE OR REPLACE FUNCTION public.fn_user_id()
 RETURNS UUID
 LANGUAGE sql
@@ -200,34 +204,20 @@ END;
 $$;
 
 
--- =====================================================
--- BLOCK 5: ROW-LEVEL SECURITY POLICIES
---
--- Key difference from SQL Server:
---   SQL Server: CREATE FUNCTION + CREATE SECURITY POLICY
---   PostgreSQL: ALTER TABLE ENABLE ROW LEVEL SECURITY
---               + CREATE POLICY with USING clause
---
--- No SCHEMABINDING exists in Postgres — functions can
--- reference other functions freely inside policies.
--- fn_is_admin() CAN be called here unlike SQL Server.
---
--- Each table needs RLS enabled then a policy created.
--- USING clause controls which rows are visible (SELECT).
--- WITH CHECK clause controls which rows can be written.
--- =====================================================
 
 -- Enable RLS on all four telemetry tables
 ALTER TABLE public.cpu     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.disk    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ram     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.thermal ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.vms     ENABLE ROW LEVEL SECURITY;
 
 -- Force RLS even for table owners (critical for security)
 ALTER TABLE public.cpu     FORCE ROW LEVEL SECURITY;
 ALTER TABLE public.disk    FORCE ROW LEVEL SECURITY;
 ALTER TABLE public.ram     FORCE ROW LEVEL SECURITY;
 ALTER TABLE public.thermal FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.vms     FORCE ROW LEVEL SECURITY;
 
 -- -----------------------------------------------
 -- RLS policy helper: clearance check function
@@ -346,6 +336,26 @@ CREATE POLICY thermal_rls_policy ON public.thermal
         AND public.fn_clearance_check(node_id)
     );
 
+-- Virtual Machine policy
+CREATE POLICY thermal_rls_policy ON public.vms
+    AS PERMISSIVE
+    FOR ALL
+    USING (
+        (
+            user_id = current_setting('app.user_id', true)::UUID
+            OR public.fn_is_admin()
+        )
+        AND public.fn_clearance_check(node_id)
+    )
+    WITH CHECK (
+        (
+            user_id = current_setting('app.user_id', true)::UUID
+            OR public.fn_is_admin()
+        )
+        AND public.fn_clearance_check(node_id)
+    );
+
+
 
 -- =====================================================
 -- BLOCK 6: COMPLIANCE TABLES
@@ -451,6 +461,7 @@ REVOKE ALL ON public.audit_log      FROM PUBLIC;
 REVOKE ALL ON public.mfa_config     FROM PUBLIC;
 REVOKE ALL ON public.sessions       FROM PUBLIC;
 REVOKE ALL ON public.password_reset FROM PUBLIC;
+REVOKE ALL ON public.vms            FROM PUBLIC;
 
 -- -----------------------------------------------
 -- app_user permissions
@@ -465,6 +476,7 @@ GRANT SELECT, INSERT ON public.cpu      TO app_user;
 GRANT SELECT, INSERT ON public.disk     TO app_user;
 GRANT SELECT, INSERT ON public.ram      TO app_user;
 GRANT SELECT, INSERT ON public.thermal  TO app_user;
+GRANT SELECT, INSERT ON public.vms      TO app_user;
 
 -- Nodes: read only
 GRANT SELECT ON public.nodes TO app_user;
@@ -491,6 +503,7 @@ GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO app_user;
 GRANT SELECT ON public.audit_log    TO auditor_user;
 GRANT SELECT ON public.sessions     TO auditor_user;
 GRANT SELECT ON public.mfa_config   TO auditor_user;
+DENY  SELECT, INSERT, UPDATE, DELETE ON public.vms TO auditor_user;
 -- No access to telemetry, users, or nodes
 
 -- -----------------------------------------------
@@ -527,6 +540,12 @@ CREATE INDEX idx_disk_node          ON public.disk             (node_id);
 CREATE INDEX idx_ram_node           ON public.ram              (node_id);
 CREATE INDEX idx_thermal_node       ON public.thermal          (node_id);
 
+-- Timestamp: node + timestamptz
+CREATE INDEX idx_cpu_recorded_at     ON public.cpu     (node_id, recorded_at DESC);
+CREATE INDEX idx_disk_recorded_at    ON public.disk    (node_id, recorded_at DESC);
+CREATE INDEX idx_ram_recorded_at     ON public.ram     (node_id, recorded_at DESC);
+CREATE INDEX idx_thermal_recorded_at ON public.thermal (node_id, recorded_at DESC);
+
 -- Users: account lockout queries (IA.L2-3.5.3)
 CREATE INDEX idx_users_locked       ON public.users            (account_locked, failed_login_count);
 
@@ -559,3 +578,12 @@ CREATE INDEX idx_reset_user         ON public.password_reset   (user_id, expires
 
 -- Password reset: token validation
 CREATE INDEX idx_reset_token        ON public.password_reset   (token_hash);
+
+-- VMs: node + time (dashboard overview)
+CREATE INDEX idx_vms_node_time       ON public.vms     (node_id, recorded_at DESC);
+
+-- VMs: status filter (find all running VMs quickly)
+CREATE INDEX idx_vms_status          ON public.vms     (status, recorded_at DESC);
+
+-- VMs: user + node (RLS filter pattern)
+CREATE INDEX idx_vms_user_node       ON public.vms     (user_id, node_id);
