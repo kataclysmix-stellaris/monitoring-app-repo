@@ -21,9 +21,7 @@
 
 
     <table class="full-width">
-      <tr>
-    <td colspan="3"><h1>Welcome (Username)</h1></td>
-      </tr>
+
       <tr>
         <td colspan="1"><h1>Dashboard</h1></td>
         <td><h1 align ="center">Graphs</h1></td>
@@ -32,34 +30,34 @@
         <td colspan="1">
           <h2>System</h2><br>
           <!-- This area is a bit tough to work on considering that there's not many graphs or things to work with interactively atm - htw -->
-          <details open="true"> 
-            <summary>Node 1</summary>
+          <details class="node" open="true"> 
+            <summary class="nodeName">Node 1</summary>
             <ul>
-              <li>VM 1</li>
-              <li>VM 2</li>
-              <li>VM 3</li>
-              <li>VM 4</li>
-              <li>VM 5</li>
+              <li class="vmObject critical">VM 1</li> <!-- Critical example -->
+              <li class="vmObject">VM 2</li>
+              <li class="vmObject">VM 3</li>
+              <li class="vmObject">VM 4</li>
+              <li class="vmObject">VM 5</li>
             </ul>
           </details>
-          <details>
-            <summary>Node 2</summary>
+          <details class="node">
+            <summary class="nodeName">Node 2</summary>
             <ul>
-              <li>VM 1</li>
-              <li>VM 2</li>
-              <li>VM 3</li>
-              <li>VM 4</li>
-              <li>VM 5</li>
+              <li class="vmObject">VM 1</li>
+              <li class="vmObject">VM 2</li>
+              <li class="vmObject">VM 3</li>
+              <li class="vmObject">VM 4</li>
+              <li class="vmObject">VM 5</li>
             </ul>
           </details>
-          <details>
-            <summary>Node 3</summary>
+          <details class="node">
+            <summary class="nodeName">Node 3</summary>
             <ul>
-              <li>VM 1</li>
-              <li>VM 2</li>
-              <li>VM 3</li>
-              <li>VM 4</li>
-              <li>VM 5</li>
+              <li class="vmObject">VM 1</li>
+              <li class="vmObject">VM 2</li>
+              <li class="vmObject">VM 3</li>
+              <li class="vmObject">VM 4</li>
+              <li class="vmObject">VM 5</li>
             </ul>
           </details>
         </td>
