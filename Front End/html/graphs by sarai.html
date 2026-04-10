@@ -5,57 +5,89 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h2>System Monitor (Simulated Data)</h2>
+  <h2>System Monitor (updated version, should hook up to PostgreSQL)</h2>
 
-  <div style="display: flex; gap: 10px;">
-<canvas id="cpuChart" width="300" height="150"></canvas>
-<canvas id="gpuChart" width="300" height="150"></canvas>
-<canvas id="storageChart" width="300" height="150"></canvas>
+<div style="display: flex; gap: 10px; flex-wrap: wrap;">
+  <canvas id="cpuChart" width="300" height="150"></canvas>
+  <canvas id="gpuChart" width="300" height="150"></canvas>
+  <canvas id="storageChart" width="300" height="150"></canvas>
+  <canvas id="tempChart" width="300" height="150"></canvas>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  function createChart(ctx, label, color) {
-    return new Chart(ctx, {
-      type: 'line',
-      data: { labels: [], datasets: [{ label, data: [], borderColor: color, fill: false }] },
-      options: { animation: false, scales: { y: { min: 0, max: 100 } } }
-    });
-  }
+const WINDOW_MS = 5 * 60 * 1000; // 5-minute rolling window
+let lastTimestamp = null;
 
-  const cpuChart = createChart(document.getElementById('cpuChart').getContext('2d'), 'CPU %', 'red');
-  const gpuChart = createChart(document.getElementById('gpuChart').getContext('2d'), 'GPU %', 'purple');
-  const storageChart = createChart(document.getElementById('storageChart').getContext('2d'), 'Storage %', 'blue');
-
-
-async function updateCharts() {
-  // Fetch real data from backend
-  const res = await fetch('/stats');
-  const data = await res.json();
-  const time = new Date().toLocaleTimeString();
-
-  // Update CPU chart
-  cpuChart.data.labels.push(time);
-  cpuChart.data.datasets[0].data.push(data.cpu);
-
-  // Update GPU chart
-  gpuChart.data.labels.push(time);
-  gpuChart.data.datasets[0].data.push(data.gpu);
-
-  // Update Storage chart
-  storageChart.data.labels.push(time);
-  storageChart.data.datasets[0].data.push(data.storage);
-
-  // Keep only the last 20 points
-  [cpuChart, gpuChart, storageChart].forEach(chart => {
-    if(chart.data.labels.length > 20){
-      chart.data.labels.shift();
-      chart.data.datasets[0].data.shift();
+// ----- Create charts -----
+function createChart(ctx, label, color, yConfig = {}) {
+  return new Chart(ctx, {
+    type: 'line',
+    data: { datasets: [{ label, data: [], borderColor: color, pointRadius: 0, tension: 0.2 }] },
+    options: {
+      animation: false,
+      parsing: false,
+      responsive: true,
+      scales: {
+        x: { type: 'time' },
+        y: yConfig
+      }
     }
-    chart.update();
   });
 }
-  setInterval(updateCharts, 1000);
-</script>
 
-//i'll add tempurature later, just wanted to get the basics down first
+const cpuChart = createChart(document.getElementById('cpuChart').getContext('2d'), 'CPU %', 'red', { min: 0, max: 100 });
+const gpuChart = createChart(document.getElementById('gpuChart').getContext('2d'), 'GPU %', 'purple', { min: 0, max: 100 });
+const storageChart = createChart(document.getElementById('storageChart').getContext('2d'), 'Storage %', 'blue', { min: 0, max: 100 });
+const tempChart = createChart(document.getElementById('tempChart').getContext('2d'), 'Temperature °F', 'orange', { suggestedMin: 60, suggestedMax: 100 });
+
+const charts = [cpuChart, gpuChart, storageChart, tempChart];
+
+// ----- Add a point to charts -----
+function addPoint(row) {
+  const t = new Date(row.recorded_at || Date.now()); // fallback if no recorded_at
+  if (row.cpu != null) cpuChart.data.datasets[0].data.push({ x: t, y: row.cpu });
+  if (row.gpu != null) gpuChart.data.datasets[0].data.push({ x: t, y: row.gpu });
+  if (row.storage != null) storageChart.data.datasets[0].data.push({ x: t, y: row.storage });
+  if (row.temp != null) tempChart.data.datasets[0].data.push({ x: t, y: row.temp });
+}
+
+// ----- Trim charts to rolling window -----
+function trimWindow() {
+  const cutoff = Date.now() - WINDOW_MS;
+  charts.forEach(chart => {
+    chart.data.datasets[0].data = chart.data.datasets[0].data.filter(p => p.x >= cutoff);
+  });
+}
+
+// ----- Update charts -----
+function updateAll() {
+  charts.forEach(chart => chart.update('none'));
+}
+
+// ----- Fetch initial data -----
+async function loadInitial() {
+  const res = await fetch('/api/telemetry'); // your backend endpoint
+  const data = await res.json();
+  data.forEach(addPoint);
+  if (data.length) lastTimestamp = data[data.length - 1].recorded_at;
+  updateAll();
+}
+
+// ----- Poll for incremental updates -----
+async function poll() {
+  if (!lastTimestamp) return;
+  const res = await fetch(`/api/telemetry/since?since=${lastTimestamp}`);
+  const data = await res.json();
+  data.forEach(addPoint);
+  if (data.length) lastTimestamp = data[data.length - 1].recorded_at;
+  trimWindow();
+  updateAll();
+}
+
+// ----- Initialize -----
+loadInitial();
+setInterval(poll, 1000);
+</script>
+</body>
+</html>
