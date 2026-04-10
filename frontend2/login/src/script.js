@@ -31,28 +31,29 @@ function showMessage(element, message, type) {
 
 const moveToRegister = document.getElementById('moveToRegister');
 const moveToLogin = document.getElementById('moveToLogin');
+const forgotpasswordLink = document.getElementById('forgotPassword');
 
 moveToRegister?.addEventListener('click',() => {moveToButtonClick('register')});
 moveToLogin?.addEventListener('click',() => {moveToButtonClick('login')});
 
 function moveToButtonClick (moveTo) {
     if (moveTo !== 'register' && moveTo !== 'login') return;
-
+    formMode = moveTo;
     registerForm.reset();
 
     if (moveTo === 'register') {
-        formMode = 'register';
         moveToLogin.classList.add('opacity-50');
         moveToRegister.classList.add('scale-105');
         moveToRegister.classList.remove('opacity-50');
         moveToLogin.classList.remove('scale-105');
+        forgotpasswordLink.classList.add('hidden');
     }
     else {
-        formMode = 'login';
         moveToRegister.classList.add('opacity-50');
         moveToLogin.classList.add('scale-105');
         moveToLogin.classList.remove('opacity-50');
         moveToRegister.classList.remove('scale-105');
+        forgotpasswordLink.classList.remove('hidden');
     }
 }
 
