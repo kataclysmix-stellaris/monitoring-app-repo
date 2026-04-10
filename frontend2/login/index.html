@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>project</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="src/style.css"/>
+  </head>
+  <body class="min-h-screen">
+    <div id="app" class="bg-(--cobalt-blue-900) min-h-screen flex flex-col text-(--cobalt-blue-100)">
+      <div class="min-h-screen px-6">
+        <h1 class="font-black text-center mt-6 mb-16 text-4xl tracking-[0.25em]">
+          <button id="moveToRegister" class="cursor-pointer transition duration-300">Register</button> / 
+          <button id="moveToLogin" class="cursor-pointer transition duration-300 opacity-50">Login</button>
+        </h1>
+        <form id='registerForm' class="w-full max-w-md mx-auto bg-(--cobalt-blue-800) p-5 rounded-2xl
+          border-2 ring-4 ring-(--cobalt-blue-700) border-(--cobalt-blue-400)
+          shadow-[inset_0_0_10px(--cobalt-blue-400)0_0_12px(--cobalt-blue-400)
+        ">
+          <fieldset class="flex flex-col gap-y-8 min-w-full">
+            <div class="flex flex-col justify-center">
+              <p id="registerFormMessage" class="
+                text-center opacity-0 transition duration-300
+                font-bold text-lg mb-2
+                [text-shadow:1px_1px_1.5px_rgba(0,0,0,0.75)]
+              ">Placeholder Message</p>
+              <label for='usernameInput' class=" tracking-wider
+                font-extrabold text-xl pl-4 mb-2 w-fit hover:scale-110
+                transition duration-300 cursor-pointer
+              ">Username:</label>
+              <input type="text" id='usernameInput' placeholder="Text" class="
+                bg-(--cobalt-blue-600) rounded-xl px-3 py-1
+                focus:outline-none border-3 border-transparent focus:border-(--cobalt-blue-200)
+                focus:bg-(--cobalt-blue-400)
+                transition duration-300 hover:scale-102
+                hover:border-(--cobalt-blue-200)
+                hover:bg-(--cobalt-blue-400)
+                focus:ring-4 ring-(--cobalt-blue-400)
+                focus:scale-102 cursor-text
+              "/>
+            </div>
+
+            <div class="flex flex-col justify-center">
+              <label for='passwordInput' class="tracking-wider
+                font-extrabold text-xl pl-4 mb-2 w-fit hover:scale-110
+                transition duration-300 cursor-pointer
+              ">Password:</label>
+              <input type="password" id='passwordInput' placeholder="Text" class="
+                bg-(--cobalt-blue-600) rounded-xl px-3 py-1
+                focus:outline-none border-3 border-transparent focus:border-(--cobalt-blue-200)
+                focus:bg-(--cobalt-blue-400)
+                transition duration-300 hover:scale-102
+                hover:border-(--cobalt-blue-200)
+                hover:bg-(--cobalt-blue-400)
+                focus:ring-4 ring-(--cobalt-blue-400)
+                focus:scale-102 cursor-text
+              "/>
+
+              <a href="forgetPassword.html">dfgdfg</a>
+            </div>
+
+            <div class="flex justify-center mt-8">
+              <button type="submit" class="w-[62.5%]
+                text-center bg-(--cobalt-blue-900)
+                py-1 rounded-xl
+                focus:outline-none border-2 border-transparent
+                focus:border-(--cobalt-blue-600)
+                focus:bg-(--cobalt-blue-700) focus:scale-x-105 
+                hover:border-(--cobalt-blue-600) hover:scale-x-105
+                hover:bg-(--cobalt-blue-700)
+                shadow-[inset_0_0_8px(--cobalt-blue-800)
+                focus:shadow-[inset_0_0_8px(--cobalt-blue-500)
+                hover:shadow-[inset_0_0_8px(--cobalt-blue-500)
+                transition duration-300
+                cursor-pointer tracking-[0.15em] font-bold text-xl
+              ">Submit</button>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+    </div>
+    <script type="module" src="./src/main.js"></script>
+    <script src="./src/script.js"></script>
+  </body>
+</html>
