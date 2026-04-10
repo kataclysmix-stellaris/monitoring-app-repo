@@ -14,20 +14,19 @@
   --cobalt-blue-950: #050c1f; 
 
 
-  --color17: #0E83E8;
-  --color16: #309AED;
-  --color15: #53B1F2;
-  --color14: #75C8F7;
+  --brilliant-azure: #0E83E8;
+  --blue-bell: #309AED;
+  --cool-sky: #53B1F2;
+  --sky-blue: #75C8F7;
   --frozen-lake: #97dffc;
-  --color2: #8EB5F0;
+  --blue-ice: #8EB5F0;
   --soft-periwinkle: #858AE3;
-  --color4: #7364D2;
+  --slate-blue: #7364D2;
   --violet-twilight: #613DC1;
-  --color6: #5829A7;
+  --indigo-bloom: #5829A7;
   --indigo: #4E148C;
-  --color8: #3D0E61;
-  --dark-amethyst: #2C0735;
-  --color10: #1D0523;
-  --color11: #0F0212;
-  --color12: #000000;
+  --dark-amethyst: #3D0E61;
+  --darker-amethyst: #2C0735;
+  --midnight-violet: #1D0523;
+  --coffee-bean: #0F0212;
 }

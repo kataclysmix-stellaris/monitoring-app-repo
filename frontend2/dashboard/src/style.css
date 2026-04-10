@@ -4,6 +4,23 @@
     font-size: 20px;
     --bgTheme: #2c0735;
     --inputBgTheme: oklch(from var(--mainContentBgTheme) calc(l * 3) c h);
+
+    /*Color Scheme PM made:*/
+    --brilliant-azure: #0E83E8;
+    --blue-bell: #309AED;
+    --cool-sky: #53B1F2;
+    --sky-blue: #75C8F7;
+    --frozen-lake: #97dffc;
+    --blue-ice: #8EB5F0;
+    --soft-periwinkle: #858AE3;
+    --slate-blue: #7364D2;
+    --violet-twilight: #613DC1;
+    --indigo-bloom: #5829A7;
+    --indigo: #4E148C;
+    --dark-amethyst: #3D0E61;
+    --darker-amethyst: #2C0735;
+    --midnight-violet: #1D0523;
+    --coffee-bean: #0F0212;
 }
 
 body {
