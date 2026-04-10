@@ -260,6 +260,59 @@ BEGIN
 END;
 $$;
 
+-- pg_partman and pg_cron usage.
+SELECT partman.create_parent(
+    p_parent_table => 'public.disk',
+    p_control => 'recorded_at',
+    p_type => 'range',
+    p_interval => '1 day'
+    p_premake => '7'
+);
+
+SELECT partman.create_parent(
+    p_parent_table => 'public.cpu',
+    p_control => 'recorded_at',
+    p_type => 'range',
+    p_interval => '1 day'
+    p_premake => '7'
+);
+
+SELECT partman.create_parent(
+    p_parent_table => 'public.thermal',
+    p_control => 'recorded_at',
+    p_type => 'range',
+    p_interval => '1 day'
+    p_premake => '7'
+);
+
+SELECT partman.create_parent(
+    p_parent_table => 'public.ram',
+    p_control => 'recorded_at',
+    p_type => 'range',
+    p_interval => '1 day'
+    p_premake => '7'
+);
+
+UPDATE partman.part_config 
+SET retention = '1 week' 
+WHERE parent_table = 'public.disk';
+
+UPDATE partman.part_config 
+SET retention = '1 week' 
+WHERE parent_table = 'public.cpu';
+
+UPDATE partman.part_config 
+SET retention = '1 week' 
+WHERE parent_table = 'public.ram';
+
+UPDATE partman.part_config 
+SET retention = '1 week' 
+WHERE parent_table = 'public.thermal';
+
+SELECT cron.schedule(
+  'partition_cleanup',
+  '0 0 * * * SELECT partman.run_maintenance()'
+);
 -- CPU policy
 -- CONDITION 1: row belongs to session user OR user is admin
 -- CONDITION 2: user clearance meets node classification
