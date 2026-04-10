@@ -32,6 +32,7 @@ function showMessage(element, message, type) {
 const moveToRegister = document.getElementById('moveToRegister');
 const moveToLogin = document.getElementById('moveToLogin');
 const forgotpasswordLink = document.getElementById('forgotPassword');
+const emailInputContainer = document.getElementById('emailInputContainer');
 
 moveToRegister?.addEventListener('click',() => {moveToButtonClick('register')});
 moveToLogin?.addEventListener('click',() => {moveToButtonClick('login')});
@@ -43,17 +44,19 @@ function moveToButtonClick (moveTo) {
 
     if (moveTo === 'register') {
         moveToLogin.classList.add('opacity-50');
+        moveToLogin.classList.remove('scale-105');
         moveToRegister.classList.add('scale-105');
         moveToRegister.classList.remove('opacity-50');
-        moveToLogin.classList.remove('scale-105');
         forgotpasswordLink.classList.add('hidden');
+        emailInputContainer.classList.remove('hidden');
     }
     else {
-        moveToRegister.classList.add('opacity-50');
         moveToLogin.classList.add('scale-105');
         moveToLogin.classList.remove('opacity-50');
+        moveToRegister.classList.add('opacity-50');
         moveToRegister.classList.remove('scale-105');
         forgotpasswordLink.classList.remove('hidden');
+        emailInputContainer.classList.add('hidden');
     }
 }
 
@@ -63,33 +66,73 @@ function submitForm(event) {
     const username = document.getElementById("usernameInput")?.value;
     const password = document.getElementById("passwordInput")?.value;
     const email = document.getElementById("emailInput")?.value;
+    
+    try {
+        if (formMode === 'register') {
+            registerUser(username, password, email);
+        }
+        else {
+            loginUser(username, password);
+        }
+    }
+    catch (err) {
+        showMessage(registerMessage, err.message, "error");
+    }
+    
+}
 
+function registerUser(username, password, email) {
     if (!username || !password || !email) {
-        alert("All fields are required");
+        showMessage(registerMessage, "All fields are required", "error");
         return;
     }
-
-    if (username.includes(' ') || password.includes(' ') || email.includes(' ')) {
-        alert("Inputs cannot contain spaces");
-        return;
-    }
-
-    if (password.length < 8) {
-        alert("Password must be at least 8 or more characters");
-        return;
-    }
-
+    
     const users = JSON.parse(localStorage.getItem("users")) || [];
+    
+    if (users.find(user => user.username === username)) {
+        showMessage(registerMessage, "Username already exists", "error");
+        return;
+    }
 
+    if (users.find(user => user.email === email)) {
+        showMessage(registerMessage, "Email already exists", "error");
+        return;
+    }
+    
+    if (username.includes(' ') || password.includes(' ') || email.includes(' ')) {
+        showMessage(registerMessage, "Inputs cannot contain spaces", "error");
+        return;
+    }
+    
+    if (password.length < 8) {
+        showMessage(registerMessage, "Password must be at least 8 or more characters", "error");
+        return;
+    }
+
+    showMessage(registerMessage, "Registration successful", "success");
+    localStorage.setItem("users", JSON.stringify([...users, { username, password, email }]));
+    
+}
+
+function loginUser(username,password) {
+    if (!username || !password) {
+        showMessage(registerMessage, "All fields are required", "error");
+        return;
+    }
+    
+    const users = JSON.parse(localStorage.getItem("users")) || [];
     const user = users.find(user => user.username === username);
-
+    
     if (!user) {
-        alert("user does not exist");
+        showMessage(registerMessage, "User does not exist", "error");
+        return;
+    }
+    
+    if (user.password !== password) {
+        showMessage(registerMessage, "Incorrect password", "error");
         return;
     }
 
-    if (user.password !== password) {
-        alert("incorrect password");
-        return;
-    }
+    showMessage(registerMessage, "Login successful", "success");
+    localStorage.setItem("loggedInUser", JSON.stringify(user));
 }
