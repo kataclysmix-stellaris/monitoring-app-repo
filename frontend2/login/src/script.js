@@ -59,22 +59,23 @@ function moveToButtonClick (moveTo) {
 
 function submitForm(event) {
     event.preventDefault();
-    
+
     const username = document.getElementById("usernameInput")?.value;
     const password = document.getElementById("passwordInput")?.value;
+    const email = document.getElementById("emailInput")?.value;
 
-    if (!username || !password) {
-        alert("username and password are required");
+    if (!username || !password || !email) {
+        alert("All fields are required");
         return;
     }
 
-    if (username.includes(' ') || password.includes(' ')) {
-        alert("username and password cannot contain spaces");
+    if (username.includes(' ') || password.includes(' ') || email.includes(' ')) {
+        alert("Inputs cannot contain spaces");
         return;
     }
 
     if (password.length < 8) {
-        alert("password must be at least 8 or more characters");
+        alert("Password must be at least 8 or more characters");
         return;
     }
 
