@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "flowbite-react/plugin/tailwindcss";
+@source "../.flowbite-react/class-list.json";
 
 :root{
     font-size: 20px;
@@ -20,12 +22,22 @@ body {
     align-items: center;
 }
 
+.top{
+    align-items: center;
+    gap: 0 20px;
+}
+
+.bottom{
+    align-items: start;
+    gap: 191px
+}
+
 .card {
     --mainContentColorTheme: #0a000f;
     display: block;
     border-radius: 10px;
-    padding-left: 15px;
-    margin: 10px;
+
+    width: fit-content;
 
     max-width: 500px;
     max-height: 300px
