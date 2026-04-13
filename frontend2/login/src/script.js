@@ -66,12 +66,12 @@ function moveToButtonClick (moveTo) {
 
 function submitRegisterForm(event) {
     event.preventDefault();
-
-    const username = document.getElementById("usernameInput")?.value;
-    const password = document.getElementById("passwordInput")?.value;
-    const email = document.getElementById("emailInput")?.value;
     
     try {
+        const username = document.getElementById("usernameInput")?.value;
+        const password = document.getElementById("passwordInput")?.value;
+        const email = document.getElementById("emailInput")?.value;
+        
         if (formMode === 'register') {
             registerUser(username, password, email);
         }
@@ -114,7 +114,6 @@ function registerUser(username, password, email) {
 
     showMessage(registerMessage, "Registration successful", "success");
     localStorage.setItem("users", JSON.stringify([...users, { username, password, email }]));
-    
 }
 
 function loginUser(username,password) {
@@ -143,35 +142,41 @@ function loginUser(username,password) {
 function submitForgotPasswordForm(event) {
     event.preventDefault();
 
-    const email = document.getElementById("recoveryEmailInput")?.value;
-    const password = document.getElementById("recoveryPasswordInput")?.value;
-    const confirmPassword = document.getElementById("recoveryPasswordConfirmInput")?.value;
-
-    if (!email || !password || !confirmPassword) {
-        showMessage(forgotPasswordMessage, "All fields are required", "error");
-        return;
-    }
+    try {
+        const email = document.getElementById("recoveryEmailInput")?.value;
+        const password = document.getElementById("recoveryPasswordInput")?.value;
+        const confirmPassword = document.getElementById("recoveryPasswordConfirmInput")?.value;
     
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-
-    if (!users.find(user => user.email === email)) {
-        showMessage(forgotPasswordMessage, "No account found with that email", "error");
-        return;
-    }
-
-    if (password !== confirmPassword) {
-        showMessage(forgotPasswordMessage, "Passwords do not match", "error");
-        return;
-    }
-
-    if (email.includes(' ') || password.includes(' ') || confirmPassword.includes(' ')) {
-        showMessage(forgotPasswordMessage, "Inputs cannot contain spaces", "error");
-        return;
-    }
+        if (!email || !password || !confirmPassword) {
+            showMessage(forgotPasswordMessage, "All fields are required", "error");
+            return;
+        }
+        
+        const users = JSON.parse(localStorage.getItem("users")) || [];
     
-    if (password.length < 8) {
-        showMessage(forgotPasswordMessage, "Password must be at least 8 or more characters", "error");
-        return;
+        if (!users.find(user => user.email === email)) {
+            showMessage(forgotPasswordMessage, "No account found with that email", "error");
+            return;
+        }
+    
+        if (password !== confirmPassword) {
+            showMessage(forgotPasswordMessage, "Passwords do not match", "error");
+            return;
+        }
+    
+        if (email.includes(' ') || password.includes(' ') || confirmPassword.includes(' ')) {
+            showMessage(forgotPasswordMessage, "Inputs cannot contain spaces", "error");
+            return;
+        }
+        
+        if (password.length < 8) {
+            showMessage(forgotPasswordMessage, "Password must be at least 8 or more characters", "error");
+            return;
+        }
+
+        showMessage(forgotPasswordMessage, "Email sent", "success");
     }
-    showMessage(forgotPasswordMessage, "Email sent", "success");
+    catch (err) {
+        showMessage(forgotPasswordMessage, err.message, "error");
+    }
 }
