@@ -174,7 +174,7 @@ with open('full_data.json', 'w') as file:
     json.dump(final_output, file, indent=4)
 print(json.dumps(final_output, indent=4))
 
-#------------------------send the data to API---------------------------------
+#------------------------send the Json to API---------------------------------
 try:
     API_KEY = os.environ.get("MY_API_KEY")#find API key stored in Eviromental variable(for security)
 except:
