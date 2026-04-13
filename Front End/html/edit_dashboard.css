@@ -50,3 +50,17 @@ button {
     padding: 0.5rem 1rem;
     border-radius: 10px;
 }
+
+.node {
+    padding: 5%;
+}
+
+.vmObject {
+    font-size: 20px;
+}
+
+.critical {
+    color: red;
+    font-weight: bold;
+    font-size: 24px;
+}

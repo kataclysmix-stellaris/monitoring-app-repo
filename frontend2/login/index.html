@@ -9,7 +9,7 @@
     <link rel="stylesheet" type="text/css" href="src/style.css"/>
   </head>
   <body class="min-h-screen">
-    <div id="app" class="bg-(--cobalt-blue-900) min-h-screen flex flex-col text-(--cobalt-blue-100)">
+    <div id="app" class="bg-[linear-gradient(55deg,var(--cobalt-blue-950),var(--cobalt-blue-600))] min-h-screen flex flex-col text-(--cobalt-blue-100)">
       <div class="min-h-screen px-6">
         <h1 class="font-black text-center mt-6 mb-16 text-4xl tracking-[0.25em]">
           <button id="moveToRegister" class="cursor-pointer transition duration-300">Register</button> / 
@@ -17,7 +17,6 @@
         </h1>
         <form id='registerForm' class="w-full max-w-md mx-auto bg-(--cobalt-blue-800) p-5 rounded-2xl
           border-2 ring-4 ring-(--cobalt-blue-700) border-(--cobalt-blue-400)
-          shadow-[inset_0_0_10px(--cobalt-blue-400)0_0_12px(--cobalt-blue-400)
         ">
           <fieldset class="flex flex-col gap-y-8 min-w-full">
             <div class="flex flex-col justify-center">
@@ -31,6 +30,23 @@
                 transition duration-300 cursor-pointer
               ">Username:</label>
               <input type="text" id='usernameInput' placeholder="Text" class="
+                bg-(--cobalt-blue-600) rounded-xl px-3 py-1
+                focus:outline-none border-3 border-transparent focus:border-(--cobalt-blue-200)
+                focus:bg-(--cobalt-blue-400)
+                transition duration-300 hover:scale-102
+                hover:border-(--cobalt-blue-200)
+                hover:bg-(--cobalt-blue-400)
+                focus:ring-4 ring-(--cobalt-blue-400)
+                focus:scale-102 cursor-text
+              "/>
+            </div>
+
+            <div class="flex flex-col justify-center" id="emailInputContainer">
+              <label for='emailInput' class=" tracking-wider
+                font-extrabold text-xl pl-4 mb-2 w-fit hover:scale-110
+                transition duration-300 cursor-pointer
+              ">Email:</label>
+              <input type="email" id='emailInput' placeholder="Text" class="
                 bg-(--cobalt-blue-600) rounded-xl px-3 py-1
                 focus:outline-none border-3 border-transparent focus:border-(--cobalt-blue-200)
                 focus:bg-(--cobalt-blue-400)
@@ -57,6 +73,13 @@
                 focus:ring-4 ring-(--cobalt-blue-400)
                 focus:scale-102 cursor-text
               "/>
+
+              <a href="forgetPassword.html" id="forgotPassword" class="
+                mt-2 mx-auto font-semibold tracking-wider brightness-75
+                transition duration-300 cursor-pointer w-fit hidden
+                hover:brightness-100 hover:scale-105
+                focus:brightness-100 focus:scale-105 focus:outline-none
+              ">Forgot Password?</a>
             </div>
 
             <div class="flex justify-center mt-8">

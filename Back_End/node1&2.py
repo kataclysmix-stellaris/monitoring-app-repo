@@ -9,6 +9,7 @@ import datetime #time gets the time for the json file so sql can use that to mak
 import subprocess
 import platform
 import os
+import requests 
 
 # -------------------- NODE ID --------------------
 
@@ -171,3 +172,21 @@ final_output = {
 with open('full_data.json', 'w') as file:
     json.dump(final_output, file, indent=4)
 print(json.dumps(final_output, indent=4))
+
+#send the data to API
+try:
+    API_KEY = os.environ.get("MY_API_KEY")
+except:
+    print("failed to get key")
+headers = {  
+    "Authorization": f"Bearer {API_KEY}",   
+    "Content-Type": "application/json" 
+}  
+try:
+    response = requests.post(URL, json=data, headers=headers)  
+    if response.status_code == 200:  
+        print("sent successfully")
+    else:  
+        print(f"Error: {response.status_code} - {response.text}")  
+except Exception as e:
+    print(f"An error occurred: {e}")
