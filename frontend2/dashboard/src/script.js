@@ -6,24 +6,26 @@ async function loadData() {
 }
 async function initCharts() {
     const data = await loadData();
+    Chart.defaults.color = 'white';
 
     const cpuCtx = document.getElementById('cpuChart');
     const cpuChart = new Chart(cpuCtx, {
-        type: 'line',
+        type: 'bar',
         data: {
             labels: Array.from({ length: 16 }, (_, i) => `Core ${i+1}`),
             datasets: [{
                 label: `CPU Usage per Core (%)`,
                 data: data.cpu_per_core,
-                borderColor: 'blue',
-                backgroundColor: 'rgba(0, 0, 255, 0.75)',
+                borderColor: 'rgb(0, 140, 255)',
+                backgroundColor: 'rgba(54, 162, 235, 0.85)',
                 fill: true
             }]
         },
         options: {
             animation: false,
             scales: {
-                y: { beginAtZero: true, max: 100 }
+                y: { beginAtZero: true, max: 100 },
+                x: { autoskip: false }
             }
         }
     });
@@ -33,8 +35,9 @@ async function initCharts() {
     const storageChart = new Chart(storageCtx, {
         type: 'pie',
         data: {
-            labels: ['Used', 'Free'],
+            labels: ['Used Storage', 'Free Storage'],
             datasets: [{
+                label: 'Storage (%)',
                 data: [data.disk_percent, 100 - data.disk_percent],
                 backgroundColor: ['#FF6384', '#36A2EB'] // red = used, blue = free
             }]
