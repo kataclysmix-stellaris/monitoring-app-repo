@@ -147,9 +147,31 @@ function submitForgotPasswordForm(event) {
     const password = document.getElementById("recoveryPasswordInput")?.value;
     const confirmPassword = document.getElementById("recoveryPasswordConfirmInput")?.value;
 
-    // Needs to be able to check if the user truly exists by checking if any users have the submitted email
-    // Needs to check if the password and confirm password match  
-    // Message needs to display when successful and when an error occurs 
-    // ^ refer to the register form for examples of how I did that.
-    // showMessage(forgotPasswordMessage, err.message, "error"); (Wrapped in a catch(err) for errors)
+    if (!email || !password || !confirmPassword) {
+        showMessage(forgotPasswordMessage, "All fields are required", "error");
+        return;
+    }
+    
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+
+    if (!users.find(user => user.email === email)) {
+        showMessage(forgotPasswordMessage, "No account found with that email", "error");
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        showMessage(forgotPasswordMessage, "Passwords do not match", "error");
+        return;
+    }
+
+    if (email.includes(' ') || password.includes(' ') || confirmPassword.includes(' ')) {
+        showMessage(forgotPasswordMessage, "Inputs cannot contain spaces", "error");
+        return;
+    }
+    
+    if (password.length < 8) {
+        showMessage(forgotPasswordMessage, "Password must be at least 8 or more characters", "error");
+        return;
+    }
+    showMessage(forgotPasswordMessage, "Email sent", "success");
 }
