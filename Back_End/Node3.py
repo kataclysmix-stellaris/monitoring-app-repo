@@ -5,12 +5,24 @@ import psutil #imports psutil is used to collect telemetry data
 import time #used to slow the file down for proper use
 import json #creates the file for api to bring to sql
 import datetime #time gets the time for the json file so sql can use that to make a compound key or other method
+import requests  
+import os  
 
 #if any of these are not recognised do "pip install name"
-#This will open a file with the node identification number to recognize which node the data is coming from
 
-#with open("/home/truenas_admin/projects/'Back End'/node_id.txt", "r") as id:
-    #node_id = id.read().strip()
+
+
+# -------------------- NODE ID --------------------
+
+node_id_path = "C:\\ProgramData\\node_id.txt"#open the node id text file to get node id
+
+try:
+    with open(node_id_path, "r") as f:
+        node_id = f.read().strip()#gets the node id for machine
+except:
+    node_id = "UNKNOWN_NODE"#if unkown node assigns unknown node
+
+#------------------------grab full data node------------------------------
 
 psutil.cpu_percent(interval=None) #starts the call then waits so it works the next time
 time.sleep(1)#sleeps to make sure it working
@@ -77,20 +89,17 @@ except AttributeError:#checks to see if OS allows grabing tmpetures
 except Exception as e:#check to see if there is another problem
     print(f"An error occurred: {e}")
 
-#Time
+#------------------------get info for Json--------------------------------
 
 Time = datetime.datetime.now()#grabs full time 
 date_log = Time.strftime("%x")#gets Local version of dat ei 12/31/18
 time_hour_log = Time.strftime("%I")#grabs hour 00-12
 time_minute_log = Time.strftime("%M")#grabs minute 00-59
-time_second_log = Time.strftime("%S")
 time_meridiem_log = Time.strftime("%p")#gets wether its AM or PM
-time_log = (time_hour_log + ":" + time_minute_log + "." + time_second_log + " " +time_meridiem_log)#combines them all into a understadable time log
+time_log = (time_hour_log + ":" + time_minute_log + " " + time_meridiem_log)#combines them all into a understadable time log
 
-#Converting data into JSON
 
 data = {#uses all the data collected and converts it into a json file
-    #"node_id": node_id,
     "cpu_percent": round(cpu_percent, 2),
     "cpu_per_core": cpu_per_core,
     "cpu_freq": cpu_freq,
@@ -109,28 +118,28 @@ data = {#uses all the data collected and converts it into a json file
     "time_log": time_log
 }
 
-#For testing and easier to compare to the JSON file to see if everything is working how it should
-#this will be deleted when code is fully done
-#print(f"node_id: {node_id}")
-print(f"CPU percent: {cpu_percent}%")
-print(f"CPU core percent: {cpu_per_core}%")
-print(f"CPU freq: {cpu_freq}")
-print(f"ram_used: {ram_used:.2f} GB")
-print(f"ram_total: {ram_total:.2f} GB")
-print(f"ram_percent: {ram_percent}%")
-print(f"swap_percent: {swap_percent}%")
-print(f"disk_total: {disk_total:.2f} GB")
-print(f"disk_used: {disk_used:.2f} GB")
-print(f"disk_percent: {disk_percent}%")
-print(f"read_bytes: {read_bytes:.2f} GB")
-print(f"write_bytes: {write_bytes:.2f} GB")
-print(f"cpu_temp: {cpu_temp}%")
-print(f"system_temp: {system_temp}%")
-print(f"date_log: {date_log}")
-print(f"time_log: {time_log}")
 
-#The actual JSON file and where the data will be placed
-#uses the data to fill the json
+#------------------------put info on Json---------------------------------
+
 json_string = json.dumps(data, indent=4)
 with open('data_string.json', 'w') as file:#put in w mode so it can write and will make the file if missing
     file.write(json_string)
+
+#------------------------send the Json to API---------------------------------
+#send the data to API
+try:
+    API_KEY = os.environ.get("MY_API_KEY")#find API key stored in Eviromental variable(for security)
+except:
+    print("failed to get key")
+headers = {  #authorisation to get into the API sent with data  
+    "Authorization": f"Bearer {API_KEY}",   
+    "Content-Type": "application/json" 
+}  
+try:
+    response = requests.post(URL, json=data, headers=headers)  #send data to API
+    if response.status_code == 200:  #if it sent correctly 
+        print("sent successfully")
+    else:  #if there was a problem sending
+        print(f"Error: {response.status_code} - {response.text}")  
+except Exception as e:#if an error accoured in the sender instead of during the data being sent
+    print(f"An error occurred: {e}")

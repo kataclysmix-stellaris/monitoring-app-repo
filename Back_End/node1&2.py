@@ -13,13 +13,13 @@ import requests
 
 # -------------------- NODE ID --------------------
 
-node_id_path = "C:\\ProgramData\\node_id.txt"
+node_id_path = "C:\\ProgramData\\node_id.txt"#open the node id text file to get node id
 
 try:
     with open(node_id_path, "r") as f:
-        node_id = f.read().strip()
+        node_id = f.read().strip()#gets the node id for machine
 except:
-    node_id = "UNKNOWN_NODE"
+    node_id = "UNKNOWN_NODE"#if unkown node assigns unknown node
 
 #------------------------grab full data node------------------------------
 
@@ -94,24 +94,24 @@ except Exception as e:#check to see if there is another problem
 
 vm_data_list = []
 
-if platform.system() == "Windows":
+if platform.system() == "Windows":#node with vm run on windows
     try:
-        command = [
+        command = [#powershell command to get info on the VM for the computer
             "powershell",
             "-Command",
             "Get-VM | Select-Object Name, State, CPUUsage, MemoryAssigned | ConvertTo-Json"
         ]
 
-        result = subprocess.run(command, capture_output=True, text=True)
+        result = subprocess.run(command, capture_output=True, text=True)#run the command
 
-        if result.returncode == 0 and result.stdout.strip():
+        if result.returncode == 0 and result.stdout.strip():#if gets data
             vms = json.loads(result.stdout)
 
             # Normalize single VM case
             if isinstance(vms, dict):
                 vms = [vms]
 
-            for vm in vms:
+            for vm in vms:#go through each VM and inputs appropiate data
                 vm_info = {
                     "type": "vm",
                     "vm_id": vm.get("Name"),
@@ -126,7 +126,7 @@ if platform.system() == "Windows":
     except Exception as e:
         print("VM collection error:", e)
 
-#------------------------put info on Json---------------------------------
+#------------------------get info for Json--------------------------------
 
 #Time
 Time = datetime.datetime.now()#grabs full time 
@@ -168,25 +168,26 @@ final_output = {
     "vms": vm_data_list
 }
 
+#------------------------put info on Json---------------------------------
 
 with open('full_data.json', 'w') as file:
     json.dump(final_output, file, indent=4)
 print(json.dumps(final_output, indent=4))
 
-#send the data to API
+#------------------------send the Json to API---------------------------------
 try:
-    API_KEY = os.environ.get("MY_API_KEY")
+    API_KEY = os.environ.get("MY_API_KEY")#find API key stored in Eviromental variable(for security)
 except:
     print("failed to get key")
-headers = {  
+headers = {#authorisation to get into the API sent with data  
     "Authorization": f"Bearer {API_KEY}",   
     "Content-Type": "application/json" 
 }  
 try:
-    response = requests.post(URL, json=data, headers=headers)  
-    if response.status_code == 200:  
+    response = requests.post(URL, json=data, headers=headers)#send data to API
+    if response.status_code == 200: #if it sent correctly 
         print("sent successfully")
-    else:  
+    else:  #if there was a problem sending
         print(f"Error: {response.status_code} - {response.text}")  
-except Exception as e:
+except Exception as e:#if an error accoured in the sender instead of during the data being sent
     print(f"An error occurred: {e}")
