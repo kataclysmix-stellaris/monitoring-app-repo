@@ -16,19 +16,22 @@ async function initCharts() {
             datasets: [{
                 label: `CPU Usage per Core (%)`,
                 data: data.cpu_per_core,
-                borderColor: 'rgb(0, 140, 255)',
+                borderColor: 'rgb(34, 104, 150)',
                 backgroundColor: 'rgba(54, 162, 235, 0.85)',
+                borderWidth: '5px',
+                borderSkipped: 'bottom',
                 fill: true
             }]
         },
         options: {
-            animation: false,
-            scales: {
-                y: { beginAtZero: true, max: 100 },
-                x: { autoskip: false }
+                animation: false,
+                scales: {
+                        y: { beginAtZero: true, max: 100 },
+                        x: { ticks: {autoSkip: false, } }
+                }
             }
         }
-    });
+    );
 
     // Storage Chart (Pie)
     const storageCtx = document.getElementById('storageChart');
