@@ -1,9 +1,13 @@
 let formMode = 'register';
 
 const registerForm = document.getElementById('registerForm');
-registerForm?.addEventListener('submit', submitForm);
+const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+
+registerForm?.addEventListener('submit', submitRegisterForm);
+forgotPasswordForm?.addEventListener('submit', submitForgotPasswordForm);
 
 const registerMessage = document.getElementById('registerFormMessage');
+const forgotPasswordMessage = document.getElementById('forgotPasswordFormMessage');
 
 function showMessage(element, message, type) {
     element.textContent = message;
@@ -60,7 +64,7 @@ function moveToButtonClick (moveTo) {
     }
 }
 
-function submitForm(event) {
+function submitRegisterForm(event) {
     event.preventDefault();
 
     const username = document.getElementById("usernameInput")?.value;
@@ -78,7 +82,6 @@ function submitForm(event) {
     catch (err) {
         showMessage(registerMessage, err.message, "error");
     }
-    
 }
 
 function registerUser(username, password, email) {
@@ -135,4 +138,18 @@ function loginUser(username,password) {
 
     showMessage(registerMessage, "Login successful", "success");
     localStorage.setItem("loggedInUser", JSON.stringify(user));
+}
+
+function submitForgotPasswordForm(event) {
+    event.preventDefault();
+
+    const email = document.getElementById("recoveryEmailInput")?.value;
+    const password = document.getElementById("recoveryPasswordInput")?.value;
+    const confirmPassword = document.getElementById("recoveryPasswordConfirmInput")?.value;
+
+    // Needs to be able to check if the user truly exists by checking if any users have the submitted email
+    // Needs to check if the password and confirm password match  
+    // Message needs to display when successful and when an error occurs 
+    // ^ refer to the register form for examples of how I did that.
+    // showMessage(forgotPasswordMessage, err.message, "error"); (Wrapped in a catch(err) for errors)
 }
