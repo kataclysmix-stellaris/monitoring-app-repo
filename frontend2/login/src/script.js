@@ -1,7 +1,7 @@
 let formMode = 'register';
 
 const registerForm = document.getElementById('registerForm');
-registerForm?.addEventListener('submit', submitForm);
+registerForm?.addEventListener('submit', submitRegisterForm);
 
 const registerMessage = document.getElementById('registerFormMessage');
 
@@ -60,7 +60,7 @@ function moveToButtonClick (moveTo) {
     }
 }
 
-function submitForm(event) {
+function submitRegisterForm(event) {
     event.preventDefault();
 
     const username = document.getElementById("usernameInput")?.value;
@@ -78,7 +78,6 @@ function submitForm(event) {
     catch (err) {
         showMessage(registerMessage, err.message, "error");
     }
-    
 }
 
 function registerUser(username, password, email) {
