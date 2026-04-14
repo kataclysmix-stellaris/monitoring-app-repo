@@ -41,8 +41,18 @@ function createChart(ctx, label, color, yConfig = {}) {
 const cpuChart = createChart(document.getElementById('cpuChart').getContext('2d'), 'CPU %', 'red', { min: 0, max: 100 });
 const gpuChart = createChart(document.getElementById('gpuChart').getContext('2d'), 'GPU %', 'purple', { min: 0, max: 100 });
 const storageChart = createChart(document.getElementById('storageChart').getContext('2d'), 'Storage %', 'blue', { min: 0, max: 100 });
-const tempChart = createChart(document.getElementById('tempChart').getContext('2d'), 'Temperature °F', 'orange', { suggestedMin: 60, suggestedMax: 100 });
-
+const tempChart = createChart(
+  document.getElementById('tempChart').getContext('2d'),
+  'Temperature °F',
+  'orange',
+  {
+    suggestedMin: 60,
+    suggestedMax: 100,
+    ticks: {
+      callback: value => value + '°F'
+    }
+  }
+);
 const charts = [cpuChart, gpuChart, storageChart, tempChart];
 
 // ----- Add a point to charts -----
@@ -51,8 +61,7 @@ function addPoint(row) {
   if (row.cpu != null) cpuChart.data.datasets[0].data.push({ x: t, y: row.cpu });
   if (row.gpu != null) gpuChart.data.datasets[0].data.push({ x: t, y: row.gpu });
   if (row.storage != null) storageChart.data.datasets[0].data.push({ x: t, y: row.storage });
-  if (row.temp != null) tempChart.data.datasets[0].data.push({ x: t, y: row.temp });
-}
+  if (row.temp != null) tempChart.data.datasets[0].data.push({ x: t, y: (row.temp * 9/5) + 32 });}
 
 // ----- Trim charts to rolling window -----
 function trimWindow() {
