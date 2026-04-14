@@ -122,7 +122,8 @@ CREATE TABLE public.cpu (
     user_id             UUID,
     node_id             UUID,
     recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_cpu_node FOREIGN KEY (node_id) REFERENCES public.nodes(id)
+    CONSTRAINT fk_cpu_node FOREIGN KEY (node_id) REFERENCES public.nodes(id),
+    CONSTRAINT fk_cpu_user FOREIGN KEY (user_id) REFERENCES public.users(id)
 ) PARTITION BY RANGE (recorded_at);
 
 CREATE TABLE public.disk (
@@ -135,7 +136,8 @@ CREATE TABLE public.disk (
     user_id             UUID,
     node_id             UUID,
     recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_disk_node FOREIGN KEY (node_id) REFERENCES public.nodes(id)
+    CONSTRAINT fk_disk_node FOREIGN KEY (node_id) REFERENCES public.nodes(id),
+    CONSTRAINT fk_disk_user FOREIGN KEY (user_id) REFERENCES public.users(id)
 ) PARTITION BY RANGE (recorded_at);
 
 CREATE TABLE public.ram (
@@ -147,7 +149,8 @@ CREATE TABLE public.ram (
     user_id             UUID,
     node_id             UUID,
     recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_ram_node FOREIGN KEY (node_id) REFERENCES public.nodes(id)
+    CONSTRAINT fk_ram_node FOREIGN KEY (node_id) REFERENCES public.nodes(id),
+    CONSTRAINT fk_ram_user FOREIGN KEY (user_id) REFERENCES public.users(id)
 ) PARTITION BY RANGE (recorded_at);
 
 CREATE TABLE public.thermal (
@@ -157,7 +160,8 @@ CREATE TABLE public.thermal (
     user_id             UUID,
     node_id             UUID,
     recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_thermal_node FOREIGN KEY (node_id) REFERENCES public.nodes(id)
+    CONSTRAINT fk_thermal_node FOREIGN KEY (node_id) REFERENCES public.nodes(id),
+    CONSTRAINT fk_thermal_user FOREIGN KEY (user_id) REFERENCES public.users(id)
 ) PARTITION BY RANGE (recorded_at);
 
 CREATE TABLE public.vms (
