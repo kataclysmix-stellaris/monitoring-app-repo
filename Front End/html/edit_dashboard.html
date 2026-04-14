@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dashboard</title>
     <link rel="stylesheet" href="edit_dashboard.css">
+    <script src="vmCheckThingy.js" defer></script>
 </head>
 
 <style>
@@ -15,7 +16,7 @@
     <h1>Dashboard</h1>
     <p>Welcome, <span id="user"></span>!</p>
 
-   <a href="Dashboard.html" onclick="editDashboard()" class="button">Edit Dashboard</a>
+    <a href="Dashboard.html" onclick="editDashboard()" class="button">Edit Dashboard</a>
 
     <p id="message"></p>
 
@@ -36,31 +37,31 @@
           <details class="node" open="true"> 
             <summary class="nodeName">Node 1</summary>
             <ul>
-              <li class="vmObject critical">VM 1</li> <!-- Critical example -->
-              <li class="vmObject">VM 2</li>
-              <li class="vmObject">VM 3</li>
-              <li class="vmObject">VM 4</li>
-              <li class="vmObject">VM 5</li>
+              <li class="vmObject" id="one1">VM 1</li> <!-- Critical example -->
+              <li class="vmObject" id="one2">VM 2</li>
+              <li class="vmObject" id="one3">VM 3</li>
+              <li class="vmObject" id="one4">VM 4</li>
+              <li class="vmObject" id="one5">VM 5</li>
             </ul>
           </details>
           <details class="node">
             <summary class="nodeName">Node 2</summary>
             <ul>
-              <li class="vmObject">VM 1</li>
-              <li class="vmObject">VM 2</li>
-              <li class="vmObject">VM 3</li>
-              <li class="vmObject">VM 4</li>
-              <li class="vmObject">VM 5</li>
+              <li class="vmObject" id="two1">VM 1</li>
+              <li class="vmObject" id="two2">VM 2</li>
+              <li class="vmObject" id="two3">VM 3</li>
+              <li class="vmObject" id="two4">VM 4</li>
+              <li class="vmObject" id="two5">VM 5</li>
             </ul>
           </details>
           <details class="node">
             <summary class="nodeName">Node 3</summary>
             <ul>
-              <li class="vmObject">VM 1</li>
-              <li class="vmObject">VM 2</li>
-              <li class="vmObject">VM 3</li>
-              <li class="vmObject">VM 4</li>
-              <li class="vmObject">VM 5</li>
+              <li class="vmObject" id="three1">VM 1</li>
+              <li class="vmObject" id="three2">VM 2</li>
+              <li class="vmObject" id="three3">VM 3</li>
+              <li class="vmObject" id="three4">VM 4</li>
+              <li class="vmObject" id="three5">VM 5</li>
             </ul>
           </details>
         </td>
