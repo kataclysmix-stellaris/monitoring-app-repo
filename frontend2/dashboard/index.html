@@ -65,19 +65,19 @@
             <div class="bottom">
                 <div class="card">
                     <h3>NAND</h3>
-                    <p>Type: </p>
-                    <p>Channel: </p>
+                    <p>Type: <span id="nandType"></span></p>
+                    <p>Channel: <span id="nandChannel"></span></p>
                 </div> 
                 
                 <div class="card">
                     <h3>Thermal</h3>
-                    <p>CPU Temperature: <span class="text-orange-400" id="cpu-temp">N/A</span></p>
-                    <p>System Temperature: <span class="text-blue-300" id="sys-temp">N/A</span></p>
+                    <p>CPU Temperature: <span id="cpuTemp">N/A</span></p>
+                    <p>System Temperature: <span id="sysTemp">N/A</span></p>
                 </div>
                 
                 <div class="card"> 
                     <h3>Node Status</h3>
-                    <p id="node-status" class="text-center text-2xl text-lime-600">OK</p>
+                    <p id="nodeStatus" class="text-center text-2xl">Receiving...</p>
                 </div> 
             </div>
             <button type="button" onclick="logout()">Logout</button>
