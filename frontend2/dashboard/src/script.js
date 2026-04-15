@@ -115,6 +115,8 @@ async function initCharts() {
         document.getElementById('nodeStatus').textContent = `${getNodeStatus(data)}`;
         updateNAND(data);
         updateTemperature(data);
+        document.getElementById('day').textContent = `${data.date_log}`;
+        document.getElementById('time').textContent = `${data.time_log}`;
         cpuChart.update();
         storageChart.update();
         ramChart.update();
