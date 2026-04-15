@@ -1,8 +1,8 @@
 async function loadData() {
-    const r = await fetch('/data_string.json');
+    const result = await fetch('/data_string.json');
     if (!r.ok) throw new Error(`Failed to load: ${r.status}`);
-    const d = await r.json();
-    return d;
+    const data = await result.json();
+    return data;
 }
 function getNodeStatus(data) {
     if (data.cpu_percent > 90 || data.ram_percent > 90 || data.disk_percent > 90) {
@@ -74,8 +74,8 @@ async function updateTime() {
 
     const dateOptions = {
         year: 'numeric',   // 2026
-        month: 'long',     // April
-        day: 'numeric'     // 15
+        month: 'long',     // month
+        day: 'numeric'     // day
     };
 
     const timeOptions = {
@@ -85,17 +85,22 @@ async function updateTime() {
         hour12: true
     };
 
+    // Log Date and Time
     const logDT = parseDateTime(data.date_log, data.time_log);
 
+    //Show Log Date
     document.getElementById('logDay').textContent =
         logDT.toLocaleDateString('en-US', dateOptions);
 
+    //Show Log Time
     document.getElementById('logTime').textContent =
         logDT.toLocaleTimeString('en-US', timeOptions);
 
+    //Show Current Date
     document.getElementById('today').textContent =
         now.toLocaleDateString('en-US', dateOptions);
 
+    //Show Current Time
     document.getElementById('timeNow').textContent =
         now.toLocaleTimeString('en-US', timeOptions);
 }
@@ -168,7 +173,7 @@ async function initCharts() {
     updateNAND(data);
     updateTime();
 
-    // Update every 30 seconds
+    // Update every 5 seconds
     setInterval(async () => {
         const data = await loadData(); // one fetch
         cpuChart.data.datasets[0].data = data.cpu_per_core;
