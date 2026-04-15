@@ -38,6 +38,67 @@ function updateTemperature(data) {
         systemTempSpan.style.color = data.system_temp > 80 ? 'orange' : 'blue';
     }
 }
+function parseDateTime(date_log, time_log) {
+    // --- DATE ---
+    let [month, day, year] = date_log.split('/');
+    year = Number(year) < 50 ? `20${year}` : `19${year}`;
+
+    // --- TIME ---
+    let [time, modifier] = time_log.split(' ');
+    time = time.replace('.', ':');
+
+    let [hours, minutes, seconds] = time.split(':');
+
+    hours = Number(hours);
+
+    if (modifier === 'PM' && hours !== 12) {
+        hours += 12;
+    }
+    if (modifier === 'AM' && hours === 12) {
+        hours = 0;
+    }
+
+    // --- BUILD DATE ---
+    return new Date(
+        Number(year),
+        Number(month) - 1, // JS months are 0-based
+        Number(day),
+        hours,
+        Number(minutes),
+        Number(seconds)
+    );
+}
+async function updateTime() {
+    const data = await loadData();
+    const now = new Date();
+
+    const dateOptions = {
+        year: 'numeric',   // 2026
+        month: 'long',     // April
+        day: 'numeric'     // 15
+    };
+
+    const timeOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    };
+
+    const logDT = parseDateTime(data.date_log, data.time_log);
+
+    document.getElementById('logDay').textContent =
+        logDT.toLocaleDateString('en-US', dateOptions);
+
+    document.getElementById('logTime').textContent =
+        logDT.toLocaleTimeString('en-US', timeOptions);
+
+    document.getElementById('today').textContent =
+        now.toLocaleDateString('en-US', dateOptions);
+
+    document.getElementById('timeNow').textContent =
+        now.toLocaleTimeString('en-US', timeOptions);
+}
 async function initCharts() {
     const data = await loadData();
     Chart.defaults.color = 'white';
@@ -105,6 +166,7 @@ async function initCharts() {
     document.getElementById('nodeStatus').textContent = `${getNodeStatus(data)}`;
     updateTemperature(data);
     updateNAND(data);
+    updateTime();
 
     // Update every 30 seconds
     setInterval(async () => {
@@ -115,12 +177,15 @@ async function initCharts() {
         document.getElementById('nodeStatus').textContent = `${getNodeStatus(data)}`;
         updateNAND(data);
         updateTemperature(data);
-        document.getElementById('day').textContent = `${data.date_log}`;
-        document.getElementById('time').textContent = `${data.time_log}`;
         cpuChart.update();
         storageChart.update();
         ramChart.update();
     }, 5000);
+
+    // Updates clock every half-second
+    setInterval(async () => {
+        updateTime();
+    }, 500)
 }
 
 initCharts();
