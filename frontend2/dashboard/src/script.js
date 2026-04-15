@@ -1,6 +1,6 @@
 async function loadData() {
     const result = await fetch('/data_string.json');
-    if (!r.ok) throw new Error(`Failed to load: ${r.status}`);
+    if (!result.ok) throw new Error(`Failed to load: ${result.status}`);
     const data = await result.json();
     return data;
 }
