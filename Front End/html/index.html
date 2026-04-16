@@ -5,11 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="dashboard.css">
-    <link href="/dist/output.css" rel="stylesheet">
+    <link rel="stylesheet" href="./dist/output.css">
 
     <title>System Dashboard</title>
     <script src="../node_modules/flowbite/dist/flowbite.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.46.0/dist/apexcharts.min.js"></script>
     <style>
 
         body { 
@@ -34,7 +33,7 @@
             width: 400px; 
         }
         canvas { 
-            background-color: #4e148c;
+            background-color: #ffffff;
             border-radius: 5px; 
             border-style: double;
             border-color: white;
@@ -46,8 +45,6 @@
 
 <body>
         <h1>Monitoring Dashboard</h1>
-
-    <script src="script.js"></script>
         
             <h2>Welcome, <span id="user"></span>!</h2>
             <p id="message"></p> <div class="dashboard">
@@ -56,8 +53,11 @@
 
                 <div class="card">
                     <h3>CPU Utilization</h3>
-
-                    <div id="cpuChart" height="150"></div>
+                        <div class="container">
+                            <div class="flex justify-center bg-gray-100 p-5 rounded-lg shadow-lg">
+                                <canvas id="cpuChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
                 </div> 
                 
                 <div class="card">     
@@ -85,19 +85,14 @@
                 <h3>Node Status</h3>
             </div> 
         </div>
-
+        
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script>
-        // 30 seconds in milliseconds
-        const intervalMs = 30 * 1000; 30000;
-    </script>
+        <script src="script.js"></script>
+
 
     <a href="edit_dashboard.html">Edit Dashboard</a>
 
     <button type="button" id="logout_button" onclick="logout()">Logout</button>
-
-</div>
 
 </body>
 </html>
