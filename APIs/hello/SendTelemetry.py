@@ -3,6 +3,8 @@ from django.http import JsonResponse, HttpResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime
+import psycopg2
+from psycopg2.extras import Json
 
 #csrf_exempt temporary for testing
 @csrf_exempt
@@ -13,8 +15,7 @@ def home(request):
     
     #retrieves file sent
     file = request.FILES.get("file")
-    jsondata = json.loads(file.read())
-
+    jsondata = json.load(file)
     #rules checks if values are valid before sending -- rules for other datatypes need added
     try:
         rules = {
@@ -33,22 +34,40 @@ def home(request):
             #system/other
             "system_temp": lambda x: x == None or 0 <= x <= 100,
             "read_bytes": lambda x: 0 <= x,
-            "write_bytes": lambda x: 0 <= x,
-            "date_log": lambda x: isinstance(datetime.strptime(x, "%m/%d/%y"), datetime),
-            "time_log": lambda x: isinstance(datetime.strptime(x, "%I:%M %p"), datetime),
+            "write_bytes": lambda x: x == None or 0 <= x,
         }    
 
         if all(rules[key](jsondata.get(key)) for key in rules):
-            #should print data_string.json -- testing purposes
-            print(jsondata)
             #return will need to update the db once it is added
-            return JsonResponse(jsondata, safe=False)
+            # return JsonResponse(jsondata, safe=False)
+            pass
         else:
             print("data impossible or incorrectly formatted")
             return JsonResponse({"error":"data incorrect"}, status=400)
     
     except:
-        print("data impossible or incorrectly formatted")
+        print("data impossible or incorrectly formatted 2")
         return JsonResponse({"error":"data incorrect"}, status=400)
 
-    #if rules are all true, send file to database
+    #if rules are all true, separate key and value, use key to determine where in the database to place it, insert value into db.
+    
+    #CPU insert
+    #connect to DB, insert
+    #EDIT DBNAME USER AND PASSWORD FOR DB
+    conn = psycopg2.connect("dbname=postgres user=postgres password=password")
+    cur=conn.cursor()
+
+    cur.execute("INSERT INTO dbo.cpu (cpu_percent, cpu_core_per, cpu_frequency) VALUES (%s, %s, %s)", 
+                (Json(jsondata["cpu_percent"]), 
+                 Json(jsondata["cpu_per_core"]), 
+                 Json(jsondata["cpu_freq"])))
+    
+    cur.execute("SELECT * FROM dbo.cpu")
+    rows = cur.fetchall()
+    
+    conn.commit()
+
+    #end of value insertion
+    cur.close()
+    conn.close()
+    return JsonResponse({"Task":"Completed"})

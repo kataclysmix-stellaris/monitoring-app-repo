@@ -12,4 +12,4 @@ files = {
 response = requests.post(api_url, files=files)
 
 #status code should be 200 if everything is working
-print(response.status_code)
+print(response.status_code, response.text)
