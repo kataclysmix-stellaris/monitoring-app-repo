@@ -10,7 +10,6 @@ from psycopg2.extras import Json
 @csrf_exempt
 def home(request):
     #prevents GET from raising an error/breaking the page
-    print("test")
     if request.method != "POST":
         return JsonResponse({"error":"POST required"}, status=405)
     
@@ -35,7 +34,7 @@ def home(request):
             #system/other
             "system_temp": lambda x: x == None or 0 <= x <= 100,
             "read_bytes": lambda x: 0 <= x,
-            "write_bytes": lambda x: 0 <= x,
+            "write_bytes": lambda x: x == None or 0 <= x,
         }    
 
         if all(rules[key](jsondata.get(key)) for key in rules):
@@ -51,21 +50,24 @@ def home(request):
         return JsonResponse({"error":"data incorrect"}, status=400)
 
     #if rules are all true, separate key and value, use key to determine where in the database to place it, insert value into db.
+    
     #CPU insert
-    #sort data
-    cpu_percent = jsondata["cpu_percent"]
-    cpu_temp = jsondata["cpu_temp"]
-    cpu_per_core = jsondata["cpu_per_core"]
-    cpu_frequency = jsondata["cpu_freq"]
     #connect to DB, insert
     #EDIT DBNAME USER AND PASSWORD FOR DB
     conn = psycopg2.connect("dbname=postgres user=postgres password=password")
     cur=conn.cursor()
-    cur.execute("INSERT INTO dbo.cpu (cpu_percent, cpu_core_per, cpu_frequency) VALUES (%s, %s, %s)", (cpu_percent, Json(cpu_per_core), Json(cpu_frequency)))
+
+    cur.execute("INSERT INTO dbo.cpu (cpu_percent, cpu_core_per, cpu_frequency) VALUES (%s, %s, %s)", 
+                (Json(jsondata["cpu_percent"]), 
+                 Json(jsondata["cpu_per_core"]), 
+                 Json(jsondata["cpu_freq"])))
+    
     cur.execute("SELECT * FROM dbo.cpu")
     rows = cur.fetchall()
-    print(rows)
+    
     conn.commit()
+
+    #end of value insertion
     cur.close()
     conn.close()
-    return JsonResponse({"test":"test"})
+    return JsonResponse({"Task":"Completed"})
