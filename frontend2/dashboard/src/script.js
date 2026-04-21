@@ -194,3 +194,18 @@ async function initCharts() {
 }
 
 initCharts();
+
+document.addEventListener("DOMContentLoaded", () => {
+  const tempCheck = document.getElementById("tempCheck");
+  const tempUnits = document.getElementById("tempUnits");
+
+  if (!tempCheck || !tempUnits) {
+    console.log("Temperature controls not found in DOM");
+    return;
+  }
+
+  tempCheck.addEventListener("change", () => {
+    tempUnits.style.display = tempCheck.checked ? "block" : "none";
+  });
+});
+

@@ -28,6 +28,10 @@
     --coffee-bean: #0F0212;
 } */
 
+.head {
+    font-size: 35px;
+}
+
 body {
         background:         
         radial-gradient(circle at top left, rgba(90, 140, 255, 0.14), transparent 25%),
@@ -67,6 +71,7 @@ body {
     
 #logout_button {
     margin-top: 0.5rem;
+    margin-right: 10px;
     padding: 1rem 1.1rem;
     border-radius: 18px;
     border: 1px solid var(--green-border-strong);
@@ -141,6 +146,15 @@ button:hover, button:focus{
     border-collapse: collapse;
   }
 
+  table.full-width td {
+    padding-top: 0;
+    vertical-align: top;
+}
+
+    table.full-width h1 {
+    margin-bottom: 0;
+}
+
     td {
     border:white 2px solid;
   }
@@ -169,6 +183,17 @@ a:visited {
     padding: 0 12px;
   }
 
+.line h1 {
+    background-color: black;
+    color: white;
+    border: 2px solid black;
+  }
+
+    .line {
+    background-color: white;
+    color: black;
+  }
+
 .node {
     margin-top: 5px;
     padding: 5%;
@@ -187,6 +212,45 @@ a:visited {
 .nodeName{
     margin-top: 5px;
     padding-top: 0px;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: bold;
+}
+
+.display-section {
+  color: black;
+  margin-top: 20px;
+  padding: 20px;
+}
+
+.display-section h3 {
+  margin: 5px 15px;
+  font-size: 20px;
+  color: black;
+  text-align: center;
+}
+
+.display-section label {
+  display: block;
+  margin-bottom: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.display-section hr {
+    font-size: 20px;
+    border: none;
+    border-top: 3px solid black;
+    margin: 0 -15px;
+    padding: 0px;
+}
+
+.temp-units {
+  margin-left: 20px;
+  margin-top: 8px;
+  display: none;
+}
+
+.temp-units label {
+  display: block;
+  margin-bottom: 5px;
 }
