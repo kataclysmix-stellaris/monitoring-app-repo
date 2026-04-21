@@ -1,17 +1,35 @@
 // Random stuff that is needed
-let nodeStatus = 0;
-
+async function loadData() {
+    const result = await fetch('/data_string.json');
+    if (!result.ok) throw new Error(`Failed to load: ${result.status}`);
+    const data = await result.json();
+    return data;
+}
+function getNodeStatus(data) {
+    if (data.cpu_percent > 90 || data.ram_percent > 90 || data.disk_percent > 90) {
+        document.getElementById("nodeStatus").style.color = "var(--color-red-400)";
+        return 'Critical';
+    } else if (data.cpu_percent > 70 || data.ram_percent > 70 || data.disk_percent > 70) {
+        document.getElementById("nodeStatus").style.color = "var(--color-yellow-400)";
+        return 'Warning';
+    } else {
+        document.getElementById("nodeStatus").style.color = "var(--color-lime-400)";
+        return 'OK'; 
+    }
+}
 const elements = document.getElementsByClassName("vmObject");
-// Goes below or above 0 if it has an error and resets back to 0 when the error is fixed.
-function notWorky(x) {
+function notWorky(data) {
+    const nodeStatus = getNodeStatus(data);
     for (let el of elements) {
-        if (x === 0) {
-            el.style.color = "#00FF00";
-            el.classList.remove("critical");
-        } else {
-            el.style.color = "";
-            el.classList.add("critical");
+        if (nodeStatus === 'Critical') {
+            el.style.color = "var(--color-red-400)";
+        }
+        else if (nodeStatus === 'Warning') {
+            el.style.color = "var(--color-yellow-400)";
+        }
+        else {
+            el.style.color = "var(--color-lime-400)";
         }
     }
 }
-notWorky(nodeStatus);
+notWorky(loadData());
