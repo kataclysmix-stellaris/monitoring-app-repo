@@ -4,6 +4,17 @@ async function loadData() {
     const data = await result.json();
     return data;
 }
+function tempDoesWorky() {
+    document.addEventListener("DOMContentLoaded", () => {
+        const tempCheck = document.getElementById("tempCheck");
+        const tempUnits = document.getElementById("tempUnits");
+
+        if (!tempCheck || !tempUnits) {
+            console.log("Temperature controls not found in DOM");
+            return;
+        }
+    });
+}
 function getNodeStatus(data) {
     if (data.cpu_percent > 90 || data.ram_percent > 90 || data.disk_percent > 90) {
         document.getElementById("nodeStatus").style.color = "var(--color-red-400)";
@@ -16,27 +27,41 @@ function getNodeStatus(data) {
         return 'OK'; 
     }
 }
-const nandType = document.getElementById('nandType');
-const nandChannel = document.getElementById('nandChannel');
-function updateNAND(data) {
-    nandType.textContent = data.nand?.type ?? 'Pending...';
-    nandChannel.textContent = data.nand?.channel ?? 'Pending...';
-}
 const cpuTempSpan = document.getElementById('cpuTemp');
 const systemTempSpan = document.getElementById('sysTemp');
-function updateTemperature(data) {
-    cpuTempSpan.textContent = data.cpu_temp !== null ? `${data.cpu_temp}°F` : 'N/A';
-    systemTempSpan.textContent = data.system_temp !== null ? `${data.system_temp}°F` : 'N/A';
-    
-    // CPU temp color
-    if (data.cpu_temp !== null) {
-        cpuTempSpan.style.color = data.cpu_temp > 80 ? 'var(--color-orange-400)' : 'var(--color-blue-400)';
-    }
+function toCelsius(fahrenheit) {
+    return (fahrenheit - 32) * 5 / 9;
+}
+let tempUnit = 'f'; // default to Fahrenheit
+const tempToggle = document.getElementsByName('unit');
+tempToggle.forEach(radio => {
+    radio.addEventListener('change', () => {
+        tempUnit = radio.value;
+    });
+});
+function formatTemp(value) {
+  if (value === null) return 'N/A';
 
-    // System temp color
-    if (data.system_temp !== null) {
-        systemTempSpan.style.color = data.system_temp > 80 ? 'var(--color-orange-400)' : 'var(--color-blue-400)';
-    }
+  if (tempUnit === 'c') {
+    return `${toCelsius(value).toFixed(1)}°C`;
+  }
+
+  return `${value.toFixed(1)}°F`;
+}
+function updateTemperature(data) {
+  cpuTempSpan.textContent = formatTemp(data.cpu_temp);
+  systemTempSpan.textContent = formatTemp(data.system_temp);
+
+  updateColor(cpuTempSpan, data.cpu_temp);
+  updateColor(systemTempSpan, data.system_temp);
+}
+function updateColor(el, value) {
+  if (value === null) return;
+
+  el.style.color =
+    value > 80
+      ? 'var(--color-orange-400)'
+      : 'var(--color-blue-400)';
 }
 function parseDateTime(date_log, time_log) {
     // --- DATE ---
@@ -170,7 +195,6 @@ async function initCharts() {
 
     document.getElementById('nodeStatus').textContent = `${getNodeStatus(data)}`;
     updateTemperature(data);
-    updateNAND(data);
     updateTime();
 
     // Update every 5 seconds
@@ -180,7 +204,6 @@ async function initCharts() {
         storageChart.data.datasets[0].data = [data.disk_percent, 100 - data.disk_percent];
         ramChart.data.datasets[0].data = [data.ram_percent, 100 - data.ram_percent];
         document.getElementById('nodeStatus').textContent = `${getNodeStatus(data)}`;
-        updateNAND(data);
         updateTemperature(data);
         cpuChart.update();
         storageChart.update();
@@ -193,19 +216,49 @@ async function initCharts() {
     }, 500)
 }
 
+function checkBoxes() {
+    // Display elements
+    const cpuDisplay = document.getElementById('cpuDisplay');
+    const ramDisplay = document.getElementById('ramDisplay');
+    const storageDisplay = document.getElementById('storageDisplay');
+    const tempDisplay = document.getElementById('tempDisplay');
+    const tempUnits = document.getElementById('tempUnits');
+    const logsDisplay = document.getElementById('logsDisplay');
+    const nodeStatusDisplay = document.getElementById('nodeStatusDisplay');
+    // Checkboxes
+    const cpuCheck = document.getElementById('cpuCheck');
+    const ramCheck = document.getElementById('ramCheck');
+    const storageCheck = document.getElementById('storageCheck');
+    const tempCheck = document.getElementById('tempCheck');
+    const logsCheck = document.getElementById('logsCheck');
+    const nodeStatusCheck = document.getElementById('nodeStatusCheck');
+    // Event listeners for checkboxes
+    cpuCheck.addEventListener('change', () => {
+        cpuDisplay.classList.toggle('nodisplay', !cpuCheck.checked);
+    });
+
+    ramCheck.addEventListener('change', () => {
+        ramDisplay.classList.toggle('nodisplay', !ramCheck.checked);
+    });
+
+    storageCheck.addEventListener('change', () => {
+        storageDisplay.classList.toggle('nodisplay', !storageCheck.checked);
+    });
+
+    tempCheck.addEventListener('change', () => {
+        tempDisplay.classList.toggle('nodisplay', !tempCheck.checked);
+        tempUnits.style.display = tempCheck.checked ? 'block' : 'none';
+    });
+
+    logsCheck.addEventListener('change', () => {
+        logsDisplay.classList.toggle('nodisplay', !logsCheck.checked);
+    });
+
+    nodeStatusCheck.addEventListener('change', () => {
+        nodeStatusDisplay.classList.toggle('nodisplay', !nodeStatusCheck.checked);
+    });
+
+}
 initCharts();
-
-document.addEventListener("DOMContentLoaded", () => {
-  const tempCheck = document.getElementById("tempCheck");
-  const tempUnits = document.getElementById("tempUnits");
-
-  if (!tempCheck || !tempUnits) {
-    console.log("Temperature controls not found in DOM");
-    return;
-  }
-
-  tempCheck.addEventListener("change", () => {
-    tempUnits.style.display = tempCheck.checked ? "block" : "none";
-  });
-});
-
+tempDoesWorky();
+checkBoxes();

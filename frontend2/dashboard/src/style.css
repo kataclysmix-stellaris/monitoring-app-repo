@@ -131,6 +131,7 @@ button:hover, button:focus{
     background-color:var(--bg-light);
     height: 150px;
     max-height: 150px;
+    padding: 5px;
     width: 300px;
 }
 
@@ -185,15 +186,9 @@ a:visited {
   }
 
 .line h1 {
-    background-color: black;
     color: white;
-    border: 2px solid black;
-  }
-
-    .line {
-    background-color: white;
-    color: black;
-  }
+    border: 2px solid rgba(0, 0, 0, 0.342);
+}
 
 .node {
     margin-top: 5px;
@@ -217,8 +212,12 @@ a:visited {
     font-weight: bold;
 }
 
+.nodisplay {
+    display: none;
+}
+
 .display-section {
-  color: black;
+  color: white;
   margin-top: 20px;
   padding: 20px;
 }
@@ -226,7 +225,7 @@ a:visited {
 .display-section h3 {
   margin: 5px 15px;
   font-size: 20px;
-  color: black;
+  color: white;
   text-align: center;
 }
 
@@ -240,18 +239,31 @@ a:visited {
 .display-section hr {
     font-size: 20px;
     border: none;
-    border-top: 3px solid black;
+    border-top: 2px solid white;
     margin: 0 -15px;
     padding: 0px;
 }
 
-.temp-units {
+.tempUnits {
   margin-left: 20px;
   margin-top: 8px;
-  display: none;
 }
 
-.temp-units label {
-  display: block;
+.tempUnits label {
   margin-bottom: 5px;
+}
+
+.logList {
+  list-style: none;          /* remove default numbers */
+  counter-reset: log;        /* start counter */
+  padding-left: 0;
+}
+
+.logList li {
+  counter-increment: log;    /* increment for each item */
+}
+
+.logList li::before {
+  content: "Log " counter(log) ": ";
+  font-weight: bold;
 }

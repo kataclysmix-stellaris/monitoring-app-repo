@@ -113,59 +113,60 @@
                         <hr>
                         <br>
                             <label>
-                                <input type="checkbox" id="cpuCheck"> CPU
+                                <input type="checkbox" id="cpuCheck" checked> CPU
                             </label>
                             <label>
-                                <input type="checkbox" id="ramCheck"> RAM
+                                <input type="checkbox" id="ramCheck" checked> RAM
                             </label>
                             <label>
-                                <input type="checkbox" id="storageCheck"> Storage
+                                <input type="checkbox" id="storageCheck" checked> Storage
                             </label>
                             <label>
-                                <input type="checkbox" id="logsCheck"> Logs
+                                <input type="checkbox" id="logsCheck" checked> Logs
                             </label>
                             <label>
-                                <input type="checkbox" id="tempCheck"> Temperature
+                                <input type="checkbox" id="tempCheck" checked> Temperature
                             </label>
-                                <div id="tempUnits" class="temp-units">
-                                    <label><input type="radio" name="unit" value="F"> Fahrenheit</label>
-                                    <label><input type="radio" name="unit" value="C"> Celsius</label>
+                                <div id="tempUnits" class="tempUnits">
+                                    <label><input type="radio" id="fahrenheit" name="unit" value="F" checked> Fahrenheit</label>
+                                    <label><input type="radio" id="celsius" name="unit" value="C"> Celsius</label>
                                 </div>
-                            <label><input type="checkbox" id="statusCheck"> Status</label>
+                            <label><input type="checkbox" id="nodeStatusCheck" checked> Status</label>
                     </div>
                 </td>
                 <td>
                     <div class="dashboard">
                         <div class="top">
-                            <div class="card">
+                            <div class="card" id="cpuDisplay">
                                 <h3>CPU Utilization</h3> 
                                 <canvas id="cpuChart" height="150"></canvas>
                             </div>
-                            <div class="card">     
+                            <div class="card" id="ramDisplay">     
                                 <h3>RAM Usage</h3>
                                 <canvas id="ramChart" height="150"></canvas>
                             </div>
-                            <div class="card">
+                            <div class="card" id="storageDisplay">
                                 <h3>Storage</h3>
                                 <canvas id="storageChart" height="150"></canvas>
                             </div>
                         </div>
                             <div class="bottom">
-                                <div class="card">
-                                    <h3>NAND</h3>
+                                <div class="card" id="logsDisplay">
+                                    <h3>Logs</h3>
                                     <div class="bottom-card">
-                                        <p>Type: <span id="nandType"></span></p>
-                                        <p>Channel: <span id="nandChannel"></span></p>
+                                        <ol class="logsList">
+                                            <li style="counter-reset: unset;">Receiving logs...</li>
+                                        </ol>
                                     </div>
                                 </div>
-                                <div class="card">
+                                <div class="card" id="tempDisplay">
                                     <h3>Thermal</h3>
                                     <div class="bottom-card">
                                         <p>CPU Temperature: <span id="cpuTemp">N/A</span></p>
                                         <p>System Temperature: <span id="sysTemp">N/A</span></p>
                                     </div>
                                 </div>
-                                <div class="card"> 
+                                <div class="card" id="nodeStatusDisplay"> 
                                     <h3>Node Status</h3>
                                     <div class="bottom-card">
                                         <p id="nodeStatus" class="text-2xl">Receiving...</p>
