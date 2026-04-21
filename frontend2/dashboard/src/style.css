@@ -47,7 +47,7 @@ body {
         margin: 10px;
     }
 
-    p {
+    p:not(#nodeStatus) {
         text-align: left;
         font-size: 18px;
     }
@@ -121,8 +121,7 @@ button:hover, button:focus{
 }
 
 .bottom-card {
-    background-color:white;
-    color: black;
+    background-color:var(--bg-light);
     height: 150px;
     max-height: 150px;
     width: 300px;

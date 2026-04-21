@@ -6,14 +6,14 @@ async function loadData() {
 }
 function getNodeStatus(data) {
     if (data.cpu_percent > 90 || data.ram_percent > 90 || data.disk_percent > 90) {
-        document.getElementById("nodeStatus").style.color = "red";
+        document.getElementById("nodeStatus").style.color = "var(--color-red-400)";
         return 'Critical';
     } else if (data.cpu_percent > 70 || data.ram_percent > 70 || data.disk_percent > 70) {
-        document.getElementById("nodeStatus").style.color = "yellow";
+        document.getElementById("nodeStatus").style.color = "var(--color-yellow-400)";
         return 'Warning';
     } else {
-        document.getElementById("nodeStatus").style.color = "green";
-        return 'OK';
+        document.getElementById("nodeStatus").style.color = "var(--color-lime-400)";
+        return 'OK'; 
     }
 }
 const nandType = document.getElementById('nandType');
@@ -30,12 +30,12 @@ function updateTemperature(data) {
     
     // CPU temp color
     if (data.cpu_temp !== null) {
-        cpuTempSpan.style.color = data.cpu_temp > 80 ? 'orange' : 'blue';
+        cpuTempSpan.style.color = data.cpu_temp > 80 ? 'var(--color-orange-400)' : 'var(--color-blue-400)';
     }
 
     // System temp color
     if (data.system_temp !== null) {
-        systemTempSpan.style.color = data.system_temp > 80 ? 'orange' : 'blue';
+        systemTempSpan.style.color = data.system_temp > 80 ? 'var(--color-orange-400)' : 'var(--color-blue-400)';
     }
 }
 function parseDateTime(date_log, time_log) {

@@ -44,7 +44,7 @@
             box-sizing: border-box;
         }
         canvas, .bottom-card { 
-            background-color: #ffffff;
+            background-color: var(--bg-light);
             border-radius: 5px;
             border-style: solid;
             border-color: white;
@@ -164,7 +164,7 @@
                     <div class="card"> 
                         <h3>Node Status</h3>
                         <div class="bottom-card">
-                            <p id="nodeStatus" class="text-center text-2xl">Receiving...</p>
+                            <p id="nodeStatus" class="text-2xl">Receiving...</p>
                         </div>
                     </div> 
                 </div>
@@ -176,12 +176,6 @@
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    
-    <script>
-        // 30 seconds in milliseconds
-        const intervalMs = 30 * 1000;
-    </script>
-
 
     <script type="module" src="./src/main.js"></script>
     <script src="./src/script.js"></script>
