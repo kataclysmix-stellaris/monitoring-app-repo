@@ -28,6 +28,11 @@
     --coffee-bean: #0F0212;
 } */
 
+.head {
+    font-size: 35px;
+}
+
+
 body {
         background:         
         radial-gradient(circle at top left, rgba(90, 140, 255, 0.14), transparent 25%),
