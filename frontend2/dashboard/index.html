@@ -51,155 +51,132 @@
         </style>
     </head>
 <body>
-
     <div class="head">
         <h1>Monitoring Dashboard</h1>
-                <div class="container">
-                    <h2>Welcome, <span id="user"></span>!</h2> 
-                    <button type="button" id="logout_button" onclick="logout()">Logout</button>
-                </div>
-
-                <div>
-                    <p id="message"></p>
-                </div>
-    </div>
-
-<<<<<<< Updated upstream
-                <div>
-                    <p>Last update: <span id="logDay">Receiving log date...</span> <span id="logTime">Receiving log time...</span></p>
-                    <p>Current Date: <span id="today">Receiving today's date...</span> <span id="timeNow">Receiving current time...</span></p>
-                </div>
-
-                <br>
-
-                <table class="full-width">
-                    <tr class="line">
-                        <td colspan="1">
-                            <h1 >Dashboard</h1>
-                        </td>
-
-                        <td>
-                            <h1 align="center">Graphs</h1>
-                        </td>
-                    </tr>
-
-        <tr>
-
-        <td colspan="1" class="line">
-          <details class="node" open="true"> 
-            <summary class="nodeName">Node 1</summary>
-            <ul>
-              <li class="vmObject" id="one1">VM 1</li>
-              <li class="vmObject" id="one2">VM 2</li>
-              <li class="vmObject" id="one3">VM 3</li>
-              <li class="vmObject" id="one4">VM 4</li>
-              <li class="vmObject" id="one5">VM 5</li>
-            </ul>
-          </details>
-          <details class="node">
-            <summary class="nodeName">Node 2</summary>
-            <ul>
-              <li class="vmObject" id="two1">VM 1</li>
-              <li class="vmObject" id="two2">VM 2</li>
-              <li class="vmObject" id="two3">VM 3</li>
-              <li class="vmObject" id="two4">VM 4</li>
-              <li class="vmObject" id="two5">VM 5</li>
-            </ul>
-          </details>
-          <details class="node">
-            <summary class="nodeName">Node 3</summary>
-            <ul>
-              <li class="vmObject" id="three1">VM 1</li>
-              <li class="vmObject" id="three2">VM 2</li>
-              <li class="vmObject" id="three3">VM 3</li>
-              <li class="vmObject" id="three4">VM 4</li>
-              <li class="vmObject" id="three5">VM 5</li>
-            </ul>
-          </details>
-
-        <div class="display-section">
-            <hr>
-
-            <h3>Display</h3>
-
-            <hr><br>
-
-                <label><input type="checkbox"> CPU</label>
-                <label><input type="checkbox"> RAM</label>
-                <label><input type="checkbox"> Storage</label>
-                <label><input type="checkbox"> Logs</label>
-
-                <label><input type="checkbox" id="tempCheck">
-                    Temperature
-                </label>
-
-                    <div id="tempUnits" class="temp-units">
-                        <label><input type="radio" name="unit" value="F"> Fahrenheit</label>
-                        <label><input type="radio" name="unit" value="C"> Celsius</label>
-                    </div>
-                
-                <label><input type="checkbox"> Status</label>
+            <div class="container">
+                <h2>Welcome, <span id="user"></span>!</h2> 
+                <button type="button" id="logout_button" onclick="logout()">Logout</button>
         </div>
-
-        </td>
-        <td>
-                            <div class="dashboard">
-                                <div class="top">
-                                    <div class="card">
-                                        <h3>CPU Utilization</h3> 
-                                        <canvas id="cpuChart" height="150"></canvas>
-                                    </div>
-                                    <div class="card">     
-                                        <h3>RAM Usage</h3>
-                                        <canvas id="ramChart" height="150"></canvas>
-                                    </div>
-                                    <div class="card">
-                                        <h3>Storage</h3>
-                                        <canvas id="storageChart" height="150"></canvas>
+        <div>
+            <p id="message"></p>
+        </div>
+        <div>
+            <p>Last update: <span id="logDay">Receiving log date...</span> <span id="logTime">Receiving log time...</span></p>
+            <p>Current Date: <span id="today">Receiving today's date...</span> <span id="timeNow">Receiving current time...</span></p>
+        </div>
+    </div>
+        <br>
+        <table class="full-width">
+            <tr class="line">
+                <td colspan="1">
+                    <h1>Dashboard</h1>
+                </td>
+                <td>
+                    <h1 align="center">Graphs</h1>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="1" class="line">
+                    <details class="node" open="true"> 
+                        <summary class="nodeName" id="node1">Node 1</summary>
+                            <ul>
+                                <li class="vmObject" id="one1">VM 1</li>
+                                <li class="vmObject" id="one2">VM 2</li>
+                                <li class="vmObject" id="one3">VM 3</li>
+                                <li class="vmObject" id="one4">VM 4</li>
+                                <li class="vmObject" id="one5">VM 5</li>
+                            </ul>
+                    </details>
+                    <details class="node">
+                        <summary class="nodeName" id="node2">Node 2</summary>
+                            <ul>
+                                <li class="vmObject" id="two1">VM 1</li>
+                                <li class="vmObject" id="two2">VM 2</li>
+                                <li class="vmObject" id="two3">VM 3</li>
+                                <li class="vmObject" id="two4">VM 4</li>
+                                <li class="vmObject" id="two5">VM 5</li>
+                            </ul>
+                    </details>
+                    <details class="node">
+                        <summary class="nodeName" id="node3">Node 3</summary>
+                            <ul>
+                                <li class="vmObject" id="three1">VM 1</li>
+                                <li class="vmObject" id="three2">VM 2</li>
+                                <li class="vmObject" id="three3">VM 3</li>
+                                <li class="vmObject" id="three4">VM 4</li>
+                                <li class="vmObject" id="three5">VM 5</li>
+                            </ul>
+                    </details>
+                    <div class="display-section">
+                        <hr>
+                        <h3>Display</h3>
+                        <hr>
+                        <br>
+                            <label>
+                                <input type="checkbox" id="cpuCheck"> CPU
+                            </label>
+                            <label>
+                                <input type="checkbox" id="ramCheck"> RAM
+                            </label>
+                            <label>
+                                <input type="checkbox" id="storageCheck"> Storage
+                            </label>
+                            <label>
+                                <input type="checkbox" id="logsCheck"> Logs
+                            </label>
+                            <label>
+                                <input type="checkbox" id="tempCheck"> Temperature
+                            </label>
+                                <div id="tempUnits" class="temp-units">
+                                    <label><input type="radio" name="unit" value="F"> Fahrenheit</label>
+                                    <label><input type="radio" name="unit" value="C"> Celsius</label>
+                                </div>
+                            <label><input type="checkbox" id="statusCheck"> Status</label>
+                    </div>
+                </td>
+                <td>
+                    <div class="dashboard">
+                        <div class="top">
+                            <div class="card">
+                                <h3>CPU Utilization</h3> 
+                                <canvas id="cpuChart" height="150"></canvas>
+                            </div>
+                            <div class="card">     
+                                <h3>RAM Usage</h3>
+                                <canvas id="ramChart" height="150"></canvas>
+                            </div>
+                            <div class="card">
+                                <h3>Storage</h3>
+                                <canvas id="storageChart" height="150"></canvas>
+                            </div>
+                        </div>
+                            <div class="bottom">
+                                <div class="card">
+                                    <h3>NAND</h3>
+                                    <div class="bottom-card">
+                                        <p>Type: <span id="nandType"></span></p>
+                                        <p>Channel: <span id="nandChannel"></span></p>
                                     </div>
                                 </div>
-                                <div class="bottom">
-                                    <div class="card">
-                                        <h3>NAND</h3>
-                                        <div class="bottom-card">
-                                            <p>Type: <span id="nandType"></span></p>
-                                            <p>Channel: <span id="nandChannel"></span></p>
-                                        </div>
+                                <div class="card">
+                                    <h3>Thermal</h3>
+                                    <div class="bottom-card">
+                                        <p>CPU Temperature: <span id="cpuTemp">N/A</span></p>
+                                        <p>System Temperature: <span id="sysTemp">N/A</span></p>
                                     </div>
-                                    <div class="card">
-                                        <h3>Thermal</h3>
-                                        <div class="bottom-card">
-                                            <p>CPU Temperature: <span id="cpuTemp">N/A</span></p>
-                                            <p>System Temperature: <span id="sysTemp">N/A</span></p>
-                                        </div>
-                                    </div>
-                                    <div class="card"> 
-                                        <h3>Node Status</h3>
-                                        <div class="bottom-card">
-                                            <p id="nodeStatus" class="text-2xl">Receiving...</p>
-                                        </div>
-                                    </div> 
                                 </div>
-                            </div> 
-                        </td>
-                    </tr>
-                </table>
+                                <div class="card"> 
+                                    <h3>Node Status</h3>
+                                    <div class="bottom-card">
+                                        <p id="nodeStatus" class="text-2xl">Receiving...</p>
+                                    </div>
+                                </div> 
+                            </div>
+                        </div> 
+                    </td>
+                </tr>
+            </table>
         <script type="module" src="./src/main.js"></script>
         <script src="./src/script.js"></script>
     </body>
-
-           
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    
-    <script>
-        // 30 seconds in milliseconds
-        const intervalMs = 30 * 1000;
-    </script>
-
-    <script type="module" src="./src/main.js"></script>
-    <script src="./src/script.js"></script>
-
-</body>
->>>>>>> Stashed changes
 </html>
