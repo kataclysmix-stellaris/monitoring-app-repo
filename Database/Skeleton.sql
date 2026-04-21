@@ -1,648 +1,1182 @@
 -- =====================================================
--- COMPLETE DATABASE SCHEMA — PostgreSQL
+-- COMPLETE DATABASE SCHEMA — T-SQL / SQL Server 2022
 -- Military Telemetry Monitoring System (School Project)
--- CMMC L1-L3 / Zero Trust Compliant
+-- Converted from PostgreSQL
 --
--- NOTE: In a real deployment this system would use
--- LDAP/SAML via Active Directory (Option B).
--- For demonstration purposes this implementation uses
--- local password auth (Option A) with full CMMC L3
--- compliant controls: Argon2id hashing, MFA enforcement,
--- session tracking, account lockout, and audit logging.
+-- CONVERSION NOTES:
+--   UUID / gen_random_uuid() -> UNIQUEIDENTIFIER / NEWID()
+--   VARCHAR(n)               -> NVARCHAR(n)
+--   BOOLEAN                  -> BIT
+--   TIMESTAMPTZ              -> DATETIME2
+--   FLOAT                    -> FLOAT (same)
+--   JSONB                    -> NVARCHAR(MAX)  (SQL Server 2022 supports JSON natively)
+--   GENERATED ALWAYS AS IDENTITY -> IDENTITY(1,1)
+--   CREATE EXTENSION         -> not applicable; built-in equivalents used
+--   pg_partman / pg_cron     -> Partition Functions + SQL Agent job
+--   RLS USING/WITH CHECK     -> SQL Server RLS (FILTER + BLOCK predicates)
+--   REVOKE ALL FROM PUBLIC   -> SQL Server uses schema/object permissions directly
+--   ROLES                    -> SQL Server ROLE via CREATE ROLE
 --
--- RUN ON A FRESH EMPTY DATABASE ONLY.
--- Requires PostgreSQL 14+ (for gen_random_uuid and
--- current_setting with missing_ok parameter).
+-- PARTITIONING:
+--   PostgreSQL uses pg_partman for automated time-based partitioning.
+--   SQL Server 2022 uses Partition Functions and Partition Schemes.
+--   Daily partitions are pre-created for -7 days through +7 days relative
+--   to deployment, covering the same 1-week retention window.
+--   A SQL Agent job handles rolling partition maintenance.
 --
 -- RUN ORDER:
---   BLOCK 1  — Extensions
+--   BLOCK 1  — Database & Filegroups (run as sysadmin)
 --   BLOCK 2  — Roles
---   BLOCK 3  — Core Tables
---   BLOCK 4  — Helper Functions
---   BLOCK 5  — RLS Policies
---   BLOCK 6  — Compliance Tables
---   BLOCK 7  — Permissions & REVOKE
---   BLOCK 8  — Indexes
+--   BLOCK 3  — Partition Infrastructure
+--   BLOCK 4  — Core Tables
+--   BLOCK 5  — Helper Functions
+--   BLOCK 6  — RLS Security Policies
+--   BLOCK 7  — Compliance Tables
+--   BLOCK 8  — Permissions
+--   BLOCK 9  — Indexes
+--   BLOCK 10 — SQL Agent Maintenance Job
 -- =====================================================
 
 
 -- =====================================================
--- BLOCK 1: EXTENSIONS
--- gen_random_uuid() requires pgcrypto or pg_crypto.
--- In Postgres 13+ it is built into core but enabling
--- pgcrypto here ensures compatibility across versions.
+-- BLOCK 1: DATABASE & FILEGROUPS
+-- SQL Server requires filegroups for partitioning.
+-- Run as sysadmin on the target database.
 -- =====================================================
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-CREATE EXTENSION IF NOT EXISTS pg_partman;
-CREATE EXTENSION IF NOT EXISTS pg_cron;
+USE master;
+GO
+
+-- Create the database if it does not already exist
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'TelemetryDB')
+BEGIN
+    CREATE DATABASE TelemetryDB;
+END
+GO
+
+USE TelemetryDB;
+GO
+
+-- Add a secondary filegroup for partition storage
+-- In production, point the FILENAME to appropriate volumes
+IF NOT EXISTS (
+    SELECT name FROM sys.filegroups WHERE name = N'FG_Telemetry'
+)
+BEGIN
+    ALTER DATABASE TelemetryDB
+    ADD FILEGROUP FG_Telemetry;
+
+    ALTER DATABASE TelemetryDB
+    ADD FILE (
+        NAME        = N'TelemetryData',
+        FILENAME    = N'C:\SQLData\TelemetryData.ndf',
+        SIZE        = 128MB,
+        MAXSIZE     = UNLIMITED,
+        FILEGROWTH  = 64MB
+    ) TO FILEGROUP FG_Telemetry;
+END
+GO
 
 
 -- =====================================================
 -- BLOCK 2: ROLES
--- Postgres has no DENY — least privilege is enforced
--- by granting only what each role needs and revoking
--- the public default grants explicitly.
+-- SQL Server uses DATABASE ROLES (not server roles here).
+-- Permissions are granted per role below in BLOCK 8.
 -- =====================================================
-DO $$
+IF NOT EXISTS (SELECT name FROM sys.database_principals WHERE name = N'admin_user' AND type = 'R')
+    CREATE ROLE admin_user;
+GO
+
+IF NOT EXISTS (SELECT name FROM sys.database_principals WHERE name = N'app_user' AND type = 'R')
+    CREATE ROLE app_user;
+GO
+
+IF NOT EXISTS (SELECT name FROM sys.database_principals WHERE name = N'auditor_user' AND type = 'R')
+    CREATE ROLE auditor_user;
+GO
+
+
+-- =====================================================
+-- BLOCK 3: PARTITION INFRASTRUCTURE
+-- One Partition Function + Scheme per telemetry table.
+-- Boundary values cover 14 days (7 past + today + 7 future)
+-- using daily RANGE RIGHT boundaries at midnight UTC.
+--
+-- RANGE RIGHT: the boundary value is the START of the
+-- right partition, so a row at exactly midnight falls
+-- into the newer partition — consistent with pg_partman
+-- range semantics.
+--
+-- All four telemetry tables (cpu, disk, ram, thermal)
+-- share identical partition logic but SQL Server requires
+-- separate function/scheme per object to allow independent
+-- split/merge operations during rolling maintenance.
+-- =====================================================
+
+-- -----------------------------------------------
+-- CPU partition function & scheme
+-- -----------------------------------------------
+IF NOT EXISTS (
+    SELECT name FROM sys.partition_functions WHERE name = N'pf_cpu_daily'
+)
 BEGIN
-    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'admin_user') THEN
-        CREATE ROLE admin_user;
-    END IF;
-    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'app_user') THEN
-        CREATE ROLE app_user;
-    END IF;
-    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'auditor_user') THEN
-        CREATE ROLE auditor_user;
-    END IF;
+    CREATE PARTITION FUNCTION pf_cpu_daily (DATETIME2)
+    AS RANGE RIGHT FOR VALUES (
+        CAST(DATEADD(DAY, -7, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -6, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -5, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -4, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -3, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -2, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -1, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(CAST(GETUTCDATE() AS DATE) AS DATETIME2),
+        CAST(DATEADD(DAY,  1, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  2, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  3, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  4, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  5, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  6, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  7, CAST(GETUTCDATE() AS DATE)) AS DATETIME2)
+    );
 END
-$$;
+GO
 
-
--- =====================================================
--- BLOCK 3: CORE TABLES
--- Order: users -> nodes -> telemetry tables
--- users and nodes have no foreign keys so they go first
--- Telemetry tables all reference nodes(id)
---
--- Key type changes from SQL Server:
---   UNIQUEIDENTIFIER -> UUID
---   NEWID()          -> gen_random_uuid()
---   NVARCHAR(n)      -> VARCHAR(n)
---   BIT              -> BOOLEAN
---   DATETIME2        -> TIMESTAMPTZ
---   IDENTITY(1,1)    -> GENERATED ALWAYS AS IDENTITY
--- =====================================================
-
-CREATE TABLE public.users (
-    id                      UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
-    email                   VARCHAR(255)    NOT NULL UNIQUE,
-    full_name               VARCHAR(255),
-
-    -- Role & clearance (AC.L2-3.1.2)
-    role                    VARCHAR(20)     NOT NULL DEFAULT 'readonly'
-                                            CHECK (role IN ('admin','analyst','operator','auditor','readonly')),
-    clearance_level         VARCHAR(20)     NOT NULL DEFAULT 'UNCLASSIFIED'
-                                            CHECK (clearance_level IN ('UNCLASSIFIED','CUI','SECRET')),
-
-    -- Identity & auth provider (IA.L2-3.5.1)
-    email_verified          BOOLEAN         NOT NULL DEFAULT FALSE,
-    auth_provider           VARCHAR(50)     NOT NULL DEFAULT 'local'
-                                            CHECK (auth_provider IN ('local','ldap','saml','entra')),
-    auth_provider_id        VARCHAR(255),
-
-    -- Password auth — hashed by backend, never plaintext (IA.L2-3.5.2)
-    password_hash           VARCHAR(255),
-    password_salt           VARCHAR(100),
-    password_algorithm      VARCHAR(20)     NOT NULL DEFAULT 'argon2id'
-                                            CHECK (password_algorithm IN ('argon2id','bcrypt')),
-    password_changed_at     TIMESTAMPTZ,
-    password_expires_at     TIMESTAMPTZ,
-    must_change_password    BOOLEAN         NOT NULL DEFAULT FALSE,
-
-    -- Account state & lockout (IA.L2-3.5.3)
-    mfa_enforced            BOOLEAN         NOT NULL DEFAULT TRUE,
-    last_login              TIMESTAMPTZ,
-    account_locked          BOOLEAN         NOT NULL DEFAULT FALSE,
-    failed_login_count      INT             NOT NULL DEFAULT 0
-);
-
-CREATE TABLE public.nodes (
-    id                  UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- Classification used by RLS to enforce data isolation (SC.L2-3.13.8)
-    classification      VARCHAR(20)     NOT NULL DEFAULT 'UNCLASSIFIED'
-                                        CHECK (classification IN ('UNCLASSIFIED','CUI','SECRET')),
-    organization_id     UUID
-);
-
-CREATE TABLE public.cpu (
-    row_id              INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    cpu_percent         FLOAT           NOT NULL,
-    cpu_core_per        JSONB           NOT NULL DEFAULT '[]',
-    cpu_frequency       JSONB           NOT NULL,
-    user_id             UUID,
-    node_id             UUID,
-    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_cpu_node FOREIGN KEY (node_id) REFERENCES public.nodes(id),
-    CONSTRAINT fk_cpu_user FOREIGN KEY (user_id) REFERENCES public.users(id)
-) PARTITION BY RANGE (recorded_at);
-
-CREATE TABLE public.disk (
-    row_id              INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    disk_used           FLOAT           NOT NULL,
-    disk_total          FLOAT           NOT NULL,
-    disk_percent        INT             NOT NULL,
-    read_bytes          FLOAT           NOT NULL,
-    write_bytes         FLOAT           NOT NULL,
-    user_id             UUID,
-    node_id             UUID,
-    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_disk_node FOREIGN KEY (node_id) REFERENCES public.nodes(id),
-    CONSTRAINT fk_disk_user FOREIGN KEY (user_id) REFERENCES public.users(id)
-) PARTITION BY RANGE (recorded_at);
-
-CREATE TABLE public.ram (
-    row_id              INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    ram_used            FLOAT           NOT NULL,
-    ram_total           FLOAT           NOT NULL,
-    ram_per             FLOAT         NOT NULL,
-    swap_per            FLOAT,
-    user_id             UUID,
-    node_id             UUID,
-    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_ram_node FOREIGN KEY (node_id) REFERENCES public.nodes(id),
-    CONSTRAINT fk_ram_user FOREIGN KEY (user_id) REFERENCES public.users(id)
-) PARTITION BY RANGE (recorded_at);
-
-CREATE TABLE public.thermal (
-    row_id              INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    cpu_temp            FLOAT           NOT NULL,
-    system_temp         FLOAT           NOT NULL,
-    user_id             UUID,
-    node_id             UUID,
-    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_thermal_node FOREIGN KEY (node_id) REFERENCES public.nodes(id),
-    CONSTRAINT fk_thermal_user FOREIGN KEY (user_id) REFERENCES public.users(id)
-) PARTITION BY RANGE (recorded_at);
-
-CREATE TABLE public.vms (
-    row_id          INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    node_id         UUID            NOT NULL REFERENCES public.nodes(id),
-    user_id         UUID,           
-    recorded_at     TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    vm_id           VARCHAR(255)    NOT NULL,  
-    vm_name         VARCHAR(255)    NOT NULL,
-    vm_type            VARCHAR(50)     NOT NULL DEFAULT 'vm' CHECK (vm_type IN ('vm','container','wsl')),
-    status          VARCHAR(50)     NOT NULL CHECK (status IN ('Running','Stopped','Paused','Unknown')),
-    cpu_percent     FLOAT           NOT NULL DEFAULT 0,
-    ram_used_gb     FLOAT           NOT NULL DEFAULT 0,
-    ram_demand_gb   FLOAT           NOT NULL DEFAULT 0,
-    uptime          VARCHAR(100),   
-    creation_time   TIMESTAMPTZ
-    );
-    
-
-
-CREATE OR REPLACE FUNCTION public.fn_user_id()
-RETURNS UUID
-LANGUAGE sql
-STABLE
-AS $$
-    SELECT current_setting('app.user_id', true)::UUID;
-$$;
-
--- Returns TRUE if the current session user is an admin
--- Use in application/backend code only — NOT inside RLS policies
-CREATE OR REPLACE FUNCTION public.fn_is_admin()
-RETURNS BOOLEAN
-LANGUAGE plpgsql
-STABLE
-AS $$
-DECLARE
-    v_result BOOLEAN := FALSE;
+IF NOT EXISTS (
+    SELECT name FROM sys.partition_schemes WHERE name = N'ps_cpu_daily'
+)
 BEGIN
-    SELECT EXISTS (
-        SELECT 1 FROM public.users
-        WHERE id   = current_setting('app.user_id', true)::UUID
-          AND role = 'admin'
-    ) INTO v_result;
-    RETURN v_result;
-END;
-$$;
-
-
-
--- Enable RLS on all four telemetry tables
-ALTER TABLE public.cpu     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.disk    ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.ram     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.thermal ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.vms     ENABLE ROW LEVEL SECURITY;
-
--- Force RLS even for table owners (critical for security)
-ALTER TABLE public.cpu     FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.disk    FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.ram     FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.thermal FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.vms     FORCE ROW LEVEL SECURITY;
+    CREATE PARTITION SCHEME ps_cpu_daily
+    AS PARTITION pf_cpu_daily
+    ALL TO (FG_Telemetry);
+END
+GO
 
 -- -----------------------------------------------
--- RLS policy helper: clearance check function
--- Returns TRUE if the session user's clearance
+-- DISK partition function & scheme
+-- -----------------------------------------------
+IF NOT EXISTS (
+    SELECT name FROM sys.partition_functions WHERE name = N'pf_disk_daily'
+)
+BEGIN
+    CREATE PARTITION FUNCTION pf_disk_daily (DATETIME2)
+    AS RANGE RIGHT FOR VALUES (
+        CAST(DATEADD(DAY, -7, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -6, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -5, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -4, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -3, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -2, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -1, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(CAST(GETUTCDATE() AS DATE) AS DATETIME2),
+        CAST(DATEADD(DAY,  1, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  2, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  3, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  4, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  5, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  6, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  7, CAST(GETUTCDATE() AS DATE)) AS DATETIME2)
+    );
+END
+GO
+
+IF NOT EXISTS (
+    SELECT name FROM sys.partition_schemes WHERE name = N'ps_disk_daily'
+)
+BEGIN
+    CREATE PARTITION SCHEME ps_disk_daily
+    AS PARTITION pf_disk_daily
+    ALL TO (FG_Telemetry);
+END
+GO
+
+-- -----------------------------------------------
+-- RAM partition function & scheme
+-- -----------------------------------------------
+IF NOT EXISTS (
+    SELECT name FROM sys.partition_functions WHERE name = N'pf_ram_daily'
+)
+BEGIN
+    CREATE PARTITION FUNCTION pf_ram_daily (DATETIME2)
+    AS RANGE RIGHT FOR VALUES (
+        CAST(DATEADD(DAY, -7, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -6, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -5, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -4, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -3, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -2, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -1, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(CAST(GETUTCDATE() AS DATE) AS DATETIME2),
+        CAST(DATEADD(DAY,  1, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  2, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  3, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  4, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  5, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  6, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  7, CAST(GETUTCDATE() AS DATE)) AS DATETIME2)
+    );
+END
+GO
+
+IF NOT EXISTS (
+    SELECT name FROM sys.partition_schemes WHERE name = N'ps_ram_daily'
+)
+BEGIN
+    CREATE PARTITION SCHEME ps_ram_daily
+    AS PARTITION pf_ram_daily
+    ALL TO (FG_Telemetry);
+END
+GO
+
+-- -----------------------------------------------
+-- THERMAL partition function & scheme
+-- -----------------------------------------------
+IF NOT EXISTS (
+    SELECT name FROM sys.partition_functions WHERE name = N'pf_thermal_daily'
+)
+BEGIN
+    CREATE PARTITION FUNCTION pf_thermal_daily (DATETIME2)
+    AS RANGE RIGHT FOR VALUES (
+        CAST(DATEADD(DAY, -7, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -6, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -5, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -4, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -3, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -2, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY, -1, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(CAST(GETUTCDATE() AS DATE) AS DATETIME2),
+        CAST(DATEADD(DAY,  1, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  2, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  3, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  4, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  5, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  6, CAST(GETUTCDATE() AS DATE)) AS DATETIME2),
+        CAST(DATEADD(DAY,  7, CAST(GETUTCDATE() AS DATE)) AS DATETIME2)
+    );
+END
+GO
+
+IF NOT EXISTS (
+    SELECT name FROM sys.partition_schemes WHERE name = N'ps_thermal_daily'
+)
+BEGIN
+    CREATE PARTITION SCHEME ps_thermal_daily
+    AS PARTITION pf_thermal_daily
+    ALL TO (FG_Telemetry);
+END
+GO
+
+
+-- =====================================================
+-- BLOCK 4: CORE TABLES
+-- Order: users -> nodes -> telemetry tables -> vms
+--
+-- Partitioned tables: the clustered index must include
+-- the partition column (recorded_at) because SQL Server
+-- requires the partition key to be part of any unique
+-- clustered index key.  row_id + recorded_at together
+-- form the clustered PK on partitioned tables.
+-- =====================================================
+
+-- -----------------------------------------------
+-- users
+-- -----------------------------------------------
+IF OBJECT_ID(N'dbo.users', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.users (
+        id                      UNIQUEIDENTIFIER    NOT NULL CONSTRAINT DF_users_id DEFAULT NEWID(),
+        email                   NVARCHAR(255)       NOT NULL,
+        full_name               NVARCHAR(255)       NULL,
+
+        -- Role & clearance
+        role                    NVARCHAR(20)        NOT NULL CONSTRAINT DF_users_role DEFAULT N'readonly',
+        clearance_level         NVARCHAR(20)        NOT NULL CONSTRAINT DF_users_clearance DEFAULT N'UNCLASSIFIED',
+
+        -- Identity & auth provider
+        email_verified          BIT                 NOT NULL CONSTRAINT DF_users_email_verified DEFAULT 0,
+        auth_provider           NVARCHAR(50)        NOT NULL CONSTRAINT DF_users_auth_provider DEFAULT N'local',
+        auth_provider_id        NVARCHAR(255)       NULL,
+
+        -- Password auth
+        password_hash           NVARCHAR(255)       NULL,
+        password_salt           NVARCHAR(100)       NULL,
+        password_algorithm      NVARCHAR(20)        NOT NULL CONSTRAINT DF_users_pw_algorithm DEFAULT N'argon2id',
+        password_changed_at     DATETIME2           NULL,
+        password_expires_at     DATETIME2           NULL,
+        must_change_password    BIT                 NOT NULL CONSTRAINT DF_users_must_change DEFAULT 0,
+
+        -- Account state & lockout
+        mfa_enforced            BIT                 NOT NULL CONSTRAINT DF_users_mfa DEFAULT 1,
+        last_login              DATETIME2           NULL,
+        account_locked          BIT                 NOT NULL CONSTRAINT DF_users_locked DEFAULT 0,
+        failed_login_count      INT                 NOT NULL CONSTRAINT DF_users_fail_count DEFAULT 0,
+
+        CONSTRAINT PK_users PRIMARY KEY CLUSTERED (id),
+        CONSTRAINT UQ_users_email UNIQUE (email),
+        CONSTRAINT CK_users_role CHECK (role IN (N'admin', N'analyst', N'operator', N'auditor', N'readonly')),
+        CONSTRAINT CK_users_clearance CHECK (clearance_level IN (N'UNCLASSIFIED', N'CUI', N'SECRET')),
+        CONSTRAINT CK_users_auth_provider CHECK (auth_provider IN (N'local', N'ldap', N'saml', N'entra')),
+        CONSTRAINT CK_users_pw_algorithm CHECK (password_algorithm IN (N'argon2id', N'bcrypt'))
+    );
+END
+GO
+
+-- -----------------------------------------------
+-- nodes
+-- -----------------------------------------------
+IF OBJECT_ID(N'dbo.nodes', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.nodes (
+        id                  UNIQUEIDENTIFIER    NOT NULL CONSTRAINT DF_nodes_id DEFAULT NEWID(),
+        classification      NVARCHAR(20)        NOT NULL CONSTRAINT DF_nodes_class DEFAULT N'UNCLASSIFIED',
+        organization_id     UNIQUEIDENTIFIER    NULL,
+
+        CONSTRAINT PK_nodes PRIMARY KEY CLUSTERED (id),
+        CONSTRAINT CK_nodes_classification CHECK (classification IN (N'UNCLASSIFIED', N'CUI', N'SECRET'))
+    );
+END
+GO
+
+-- -----------------------------------------------
+-- cpu  (partitioned by recorded_at)
+-- PK is (row_id, recorded_at) — SQL Server requires
+-- the partition key inside the clustered index.
+-- -----------------------------------------------
+IF OBJECT_ID(N'dbo.cpu', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.cpu (
+        row_id          INT             NOT NULL IDENTITY(1,1),
+        cpu_percent     FLOAT           NOT NULL,
+        cpu_core_per    NVARCHAR(MAX)   NOT NULL CONSTRAINT DF_cpu_core_per DEFAULT N'[]',
+        cpu_frequency   NVARCHAR(MAX)   NOT NULL,
+        user_id         UNIQUEIDENTIFIER NULL,
+        node_id         UNIQUEIDENTIFIER NULL,
+        recorded_at     DATETIME2       NOT NULL CONSTRAINT DF_cpu_recorded_at DEFAULT SYSUTCDATETIME(),
+
+        CONSTRAINT PK_cpu PRIMARY KEY CLUSTERED (row_id, recorded_at)
+            ON ps_cpu_daily(recorded_at),
+        CONSTRAINT FK_cpu_node FOREIGN KEY (node_id) REFERENCES dbo.nodes(id),
+        CONSTRAINT FK_cpu_user FOREIGN KEY (user_id) REFERENCES dbo.users(id)
+    ) ON ps_cpu_daily(recorded_at);
+END
+GO
+
+-- -----------------------------------------------
+-- disk  (partitioned by recorded_at)
+-- -----------------------------------------------
+IF OBJECT_ID(N'dbo.disk', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.disk (
+        row_id          INT             NOT NULL IDENTITY(1,1),
+        disk_used       FLOAT           NOT NULL,
+        disk_total      FLOAT           NOT NULL,
+        disk_percent    INT             NOT NULL,
+        read_bytes      FLOAT           NOT NULL,
+        write_bytes     FLOAT           NOT NULL,
+        user_id         UNIQUEIDENTIFIER NULL,
+        node_id         UNIQUEIDENTIFIER NULL,
+        recorded_at     DATETIME2       NOT NULL CONSTRAINT DF_disk_recorded_at DEFAULT SYSUTCDATETIME(),
+
+        CONSTRAINT PK_disk PRIMARY KEY CLUSTERED (row_id, recorded_at)
+            ON ps_disk_daily(recorded_at),
+        CONSTRAINT FK_disk_node FOREIGN KEY (node_id) REFERENCES dbo.nodes(id),
+        CONSTRAINT FK_disk_user FOREIGN KEY (user_id) REFERENCES dbo.users(id)
+    ) ON ps_disk_daily(recorded_at);
+END
+GO
+
+-- -----------------------------------------------
+-- ram  (partitioned by recorded_at)
+-- -----------------------------------------------
+IF OBJECT_ID(N'dbo.ram', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.ram (
+        row_id          INT             NOT NULL IDENTITY(1,1),
+        ram_used        FLOAT           NOT NULL,
+        ram_total       FLOAT           NOT NULL,
+        ram_per         FLOAT           NOT NULL,
+        swap_per        FLOAT           NULL,
+        user_id         UNIQUEIDENTIFIER NULL,
+        node_id         UNIQUEIDENTIFIER NULL,
+        recorded_at     DATETIME2       NOT NULL CONSTRAINT DF_ram_recorded_at DEFAULT SYSUTCDATETIME(),
+
+        CONSTRAINT PK_ram PRIMARY KEY CLUSTERED (row_id, recorded_at)
+            ON ps_ram_daily(recorded_at),
+        CONSTRAINT FK_ram_node FOREIGN KEY (node_id) REFERENCES dbo.nodes(id),
+        CONSTRAINT FK_ram_user FOREIGN KEY (user_id) REFERENCES dbo.users(id)
+    ) ON ps_ram_daily(recorded_at);
+END
+GO
+
+-- -----------------------------------------------
+-- thermal  (partitioned by recorded_at)
+-- -----------------------------------------------
+IF OBJECT_ID(N'dbo.thermal', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.thermal (
+        row_id          INT             NOT NULL IDENTITY(1,1),
+        cpu_temp        FLOAT           NOT NULL,
+        system_temp     FLOAT           NOT NULL,
+        user_id         UNIQUEIDENTIFIER NULL,
+        node_id         UNIQUEIDENTIFIER NULL,
+        recorded_at     DATETIME2       NOT NULL CONSTRAINT DF_thermal_recorded_at DEFAULT SYSUTCDATETIME(),
+
+        CONSTRAINT PK_thermal PRIMARY KEY CLUSTERED (row_id, recorded_at)
+            ON ps_thermal_daily(recorded_at),
+        CONSTRAINT FK_thermal_node FOREIGN KEY (node_id) REFERENCES dbo.nodes(id),
+        CONSTRAINT FK_thermal_user FOREIGN KEY (user_id) REFERENCES dbo.users(id)
+    ) ON ps_thermal_daily(recorded_at);
+END
+GO
+
+-- -----------------------------------------------
+-- vms  (not partitioned — matches original schema)
+-- -----------------------------------------------
+IF OBJECT_ID(N'dbo.vms', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.vms (
+        row_id          INT             NOT NULL IDENTITY(1,1),
+        node_id         UNIQUEIDENTIFIER NOT NULL,
+        user_id         UNIQUEIDENTIFIER NULL,
+        recorded_at     DATETIME2       NOT NULL CONSTRAINT DF_vms_recorded_at DEFAULT SYSUTCDATETIME(),
+        vm_id           NVARCHAR(255)   NOT NULL,
+        vm_name         NVARCHAR(255)   NOT NULL,
+        vm_type         NVARCHAR(50)    NOT NULL CONSTRAINT DF_vms_type DEFAULT N'vm',
+        status          NVARCHAR(50)    NOT NULL,
+        cpu_percent     FLOAT           NOT NULL CONSTRAINT DF_vms_cpu DEFAULT 0,
+        ram_used_gb     FLOAT           NOT NULL CONSTRAINT DF_vms_ram_used DEFAULT 0,
+        ram_demand_gb   FLOAT           NOT NULL CONSTRAINT DF_vms_ram_demand DEFAULT 0,
+        uptime          NVARCHAR(100)   NULL,
+        creation_time   DATETIME2       NULL,
+
+        CONSTRAINT PK_vms PRIMARY KEY CLUSTERED (row_id),
+        CONSTRAINT FK_vms_node FOREIGN KEY (node_id) REFERENCES dbo.nodes(id),
+        CONSTRAINT FK_vms_user FOREIGN KEY (user_id) REFERENCES dbo.users(id),
+        CONSTRAINT CK_vms_type   CHECK (vm_type IN (N'vm', N'container', N'wsl')),
+        CONSTRAINT CK_vms_status CHECK (status  IN (N'Running', N'Stopped', N'Paused', N'Unknown'))
+    );
+END
+GO
+
+
+-- =====================================================
+-- BLOCK 5: HELPER FUNCTIONS
+--
+-- PostgreSQL current_setting('app.user_id') maps to
+-- SQL Server SESSION_CONTEXT(N'app_user_id').
+-- The backend sets this via sp_set_session_context
+-- before executing any query.
+--
+-- fn_is_admin() is used ONLY in application/backend
+-- code, not inside RLS predicates, to avoid recursive
+-- permission checks — same caveat as the original.
+-- =====================================================
+
+-- Returns the session user UUID (set by backend on connect)
+CREATE OR ALTER FUNCTION dbo.fn_user_id()
+RETURNS UNIQUEIDENTIFIER
+AS
+BEGIN
+    RETURN CAST(SESSION_CONTEXT(N'app_user_id') AS UNIQUEIDENTIFIER);
+END
+GO
+
+-- Returns 1 if the session user has the 'admin' role
+CREATE OR ALTER FUNCTION dbo.fn_is_admin()
+RETURNS BIT
+AS
+BEGIN
+    DECLARE @result BIT = 0;
+    IF EXISTS (
+        SELECT 1
+        FROM   dbo.users
+        WHERE  id   = CAST(SESSION_CONTEXT(N'app_user_id') AS UNIQUEIDENTIFIER)
+          AND  role = N'admin'
+    )
+        SET @result = 1;
+    RETURN @result;
+END
+GO
+
+-- Clearance check: returns 1 if session user clearance
 -- meets or exceeds the given node's classification.
--- Used inside every telemetry policy USING clause.
--- -----------------------------------------------
-CREATE OR REPLACE FUNCTION public.fn_clearance_check(p_node_id UUID)
-RETURNS BOOLEAN
-LANGUAGE plpgsql
-STABLE
-AS $$
-DECLARE
-    v_clearance     VARCHAR(20);
-    v_classification VARCHAR(20);
+CREATE OR ALTER FUNCTION dbo.fn_clearance_check(@p_node_id UNIQUEIDENTIFIER)
+RETURNS BIT
+AS
 BEGIN
-    -- Get session user clearance
-    SELECT clearance_level INTO v_clearance
-    FROM public.users
-    WHERE id = current_setting('app.user_id', true)::UUID;
+    DECLARE @clearance       NVARCHAR(20);
+    DECLARE @classification  NVARCHAR(20);
 
-    -- Get node classification
-    SELECT classification INTO v_classification
-    FROM public.nodes
-    WHERE id = p_node_id;
+    SELECT @clearance = clearance_level
+    FROM   dbo.users
+    WHERE  id = CAST(SESSION_CONTEXT(N'app_user_id') AS UNIQUEIDENTIFIER);
 
-    -- If node not found, deny access
-    IF v_classification IS NULL THEN
-        RETURN FALSE;
-    END IF;
+    SELECT @classification = classification
+    FROM   dbo.nodes
+    WHERE  id = @p_node_id;
 
-    -- Clearance hierarchy check
-    RETURN (
-        v_clearance = 'SECRET'
-        OR (v_clearance = 'CUI'          AND v_classification IN ('CUI','UNCLASSIFIED'))
-        OR (v_clearance = 'UNCLASSIFIED' AND v_classification = 'UNCLASSIFIED')
-    );
-END;
-$$;
+    -- Node not found → deny
+    IF @classification IS NULL
+        RETURN 0;
 
--- pg_partman and pg_cron usage.
-SELECT partman.create_parent(
-    p_parent_table => 'public.disk',
-    p_control => 'recorded_at',
-    p_type => 'range',
-    p_interval => '1 day'
-    p_premake => '7'
-);
+    -- Clearance hierarchy
+    IF @clearance = N'SECRET'
+        RETURN 1;
+    IF @clearance = N'CUI'     AND @classification IN (N'CUI', N'UNCLASSIFIED')
+        RETURN 1;
+    IF @clearance = N'UNCLASSIFIED' AND @classification = N'UNCLASSIFIED'
+        RETURN 1;
 
-SELECT partman.create_parent(
-    p_parent_table => 'public.cpu',
-    p_control => 'recorded_at',
-    p_type => 'range',
-    p_interval => '1 day'
-    p_premake => '7'
-);
-
-SELECT partman.create_parent(
-    p_parent_table => 'public.thermal',
-    p_control => 'recorded_at',
-    p_type => 'range',
-    p_interval => '1 day'
-    p_premake => '7'
-);
-
-SELECT partman.create_parent(
-    p_parent_table => 'public.ram',
-    p_control => 'recorded_at',
-    p_type => 'range',
-    p_interval => '1 day'
-    p_premake => '7'
-);
-
-UPDATE partman.part_config 
-SET retention = '1 week' 
-WHERE parent_table = 'public.disk';
-
-UPDATE partman.part_config 
-SET retention = '1 week' 
-WHERE parent_table = 'public.cpu';
-
-UPDATE partman.part_config 
-SET retention = '1 week' 
-WHERE parent_table = 'public.ram';
-
-UPDATE partman.part_config 
-SET retention = '1 week' 
-WHERE parent_table = 'public.thermal';
-
-SELECT cron.schedule(
-  'partition_cleanup',
-  '0 0 * * * SELECT partman.run_maintenance()'
-);
--- CPU policy
--- CONDITION 1: row belongs to session user OR user is admin
--- CONDITION 2: user clearance meets node classification
-CREATE POLICY cpu_rls_policy ON public.cpu
-    AS PERMISSIVE
-    FOR ALL
-    USING (
-        (
-            user_id = current_setting('app.user_id', true)::UUID
-            OR public.fn_is_admin()
-        )
-        AND public.fn_clearance_check(node_id)
-    )
-    WITH CHECK (
-        (
-            user_id = current_setting('app.user_id', true)::UUID
-            OR public.fn_is_admin()
-        )
-        AND public.fn_clearance_check(node_id)
-    );
-
--- Disk policy
-CREATE POLICY disk_rls_policy ON public.disk
-    AS PERMISSIVE
-    FOR ALL
-    USING (
-        (
-            user_id = current_setting('app.user_id', true)::UUID
-            OR public.fn_is_admin()
-        )
-        AND public.fn_clearance_check(node_id)
-    )
-    WITH CHECK (
-        (
-            user_id = current_setting('app.user_id', true)::UUID
-            OR public.fn_is_admin()
-        )
-        AND public.fn_clearance_check(node_id)
-    );
-
--- RAM policy
-CREATE POLICY ram_rls_policy ON public.ram
-    AS PERMISSIVE
-    FOR ALL
-    USING (
-        (
-            user_id = current_setting('app.user_id', true)::UUID
-            OR public.fn_is_admin()
-        )
-        AND public.fn_clearance_check(node_id)
-    )
-    WITH CHECK (
-        (
-            user_id = current_setting('app.user_id', true)::UUID
-            OR public.fn_is_admin()
-        )
-        AND public.fn_clearance_check(node_id)
-    );
-
--- Thermal policy
-CREATE POLICY thermal_rls_policy ON public.thermal
-    AS PERMISSIVE
-    FOR ALL
-    USING (
-        (
-            user_id = current_setting('app.user_id', true)::UUID
-            OR public.fn_is_admin()
-        )
-        AND public.fn_clearance_check(node_id)
-    )
-    WITH CHECK (
-        (
-            user_id = current_setting('app.user_id', true)::UUID
-            OR public.fn_is_admin()
-        )
-        AND public.fn_clearance_check(node_id)
-    );
-
--- Virtual Machine policy
-CREATE POLICY vm_rls_policy ON public.vms
-    AS PERMISSIVE
-    FOR ALL
-    USING (
-        (
-            user_id = current_setting('app.user_id', true)::UUID
-            OR public.fn_is_admin()
-        )
-        AND public.fn_clearance_check(node_id)
-    )
-    WITH CHECK (
-        (
-            user_id = current_setting('app.user_id', true)::UUID
-            OR public.fn_is_admin()
-        )
-        AND public.fn_clearance_check(node_id)
-    );
-
+    RETURN 0;
+END
+GO
 
 
 -- =====================================================
--- BLOCK 6: COMPLIANCE TABLES
--- All reference public.users via FK so users must exist.
--- Order: audit_log -> mfa_config -> sessions -> password_reset
--- =====================================================
-
--- Audit log — append-only, tamper-proof (AU.L2-3.3.1)
--- Captures: user identity, timestamp, action, result
-CREATE TABLE public.audit_log (
-    log_id              UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id             UUID            NOT NULL,
-    action_type         VARCHAR(100)    NOT NULL
-                                        CHECK (action_type IN (
-                                            'LOGIN',            -- successful full auth
-                                            'LOGIN_FAILED',     -- wrong password
-                                            'MFA_FAILED',       -- password ok, MFA failed
-                                            'LOCKED',           -- account locked out
-                                            'LOGOUT',           -- user-initiated signout
-                                            'PWD_RESET',        -- password was reset
-                                            'SESSION_EXPIRE',   -- session TTL exceeded
-                                            'QUERY',            -- data access event
-                                            'EXPORT',           -- data exported
-                                            'CONFIG_CHANGE',    -- settings modified
-                                            'ACCESS_DENIED'     -- RLS or permission block
-                                        )),
-    target_resource     VARCHAR(255),   -- e.g. 'public.cpu', 'dashboard/node-overview'
-    ip_address          VARCHAR(45),    -- supports IPv4 and IPv6
-    session_id          VARCHAR(255),
-    result              VARCHAR(20)     NOT NULL
-                                        CHECK (result IN ('SUCCESS','DENIED','FAILED')),
-    logged_at           TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    detail              TEXT            -- JSON string for extra context
-);
-
--- MFA config — one record per user per method (IA.L2-3.5.3)
-CREATE TABLE public.mfa_config (
-    mfa_id          UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID            NOT NULL
-                                    REFERENCES public.users(id),
-    mfa_type        VARCHAR(20)     NOT NULL
-                                    CHECK (mfa_type IN ('totp','hardware_key','sms')),
-    secret_hash     VARCHAR(255)    NOT NULL,   -- TOTP secret hashed at rest
-    is_active       BOOLEAN         NOT NULL DEFAULT TRUE,
-    created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    last_used_at    TIMESTAMPTZ
-);
-
--- Sessions — Zero Trust short-lived tracked sessions
--- Every login creates a session, every action validates it
-CREATE TABLE public.sessions (
-    session_id          UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id             UUID            NOT NULL
-                                        REFERENCES public.users(id),
-    session_token_hash  VARCHAR(255)    NOT NULL,   -- hash of bearer token, never plaintext
-    ip_address          VARCHAR(45),
-    user_agent          VARCHAR(500),
-    created_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    expires_at          TIMESTAMPTZ     NOT NULL,   -- backend enforces short TTL
-    revoked             BOOLEAN         NOT NULL DEFAULT FALSE,
-    revoked_at          TIMESTAMPTZ,
-    revoked_reason      VARCHAR(100)
-                                        CHECK (revoked_reason IN (
-                                            'LOGOUT','TIMEOUT','ADMIN_REVOKE'
-                                        ))
-);
-
--- Password reset — hashed token, short-lived window (IA.L2-3.5.3)
-CREATE TABLE public.password_reset (
-    reset_id        UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID            NOT NULL
-                                    REFERENCES public.users(id),
-    token_hash      VARCHAR(255)    NOT NULL,   -- reset token hashed, never plaintext
-    requested_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    expires_at      TIMESTAMPTZ     NOT NULL,   -- backend enforces short window (15 min)
-    used            BOOLEAN         NOT NULL DEFAULT FALSE,
-    used_at         TIMESTAMPTZ,
-    ip_address      VARCHAR(45)
-);
-
-
--- =====================================================
--- BLOCK 7: PERMISSIONS & REVOKE
+-- BLOCK 6: RLS SECURITY POLICIES
 --
--- Key difference from SQL Server:
---   SQL Server uses DENY to block access.
---   PostgreSQL has no DENY — instead you REVOKE
---   the default PUBLIC grants and only GRANT what
---   each role explicitly needs.
+-- SQL Server RLS uses inline table-valued functions
+-- as predicates, then binds them with CREATE SECURITY
+-- POLICY.
 --
--- Postgres grants SELECT on all tables to PUBLIC
--- by default — this must be revoked first.
+-- FILTER predicate  → controls SELECT (equivalent to
+--                     PostgreSQL USING clause).
+-- BLOCK  predicate  → controls INSERT/UPDATE/DELETE
+--                     (equivalent to WITH CHECK).
+--
+-- Two predicate functions per table:
+--   fn_rls_filter_<table>  — FILTER (read)
+--   fn_rls_block_<table>   — BLOCK  (write)
+--
+-- Both enforce the same dual condition:
+--   1. Row belongs to session user OR user is admin
+--   2. User clearance meets node classification
 -- =====================================================
 
--- Revoke all default public access on every table
-REVOKE ALL ON public.users          FROM PUBLIC;
-REVOKE ALL ON public.nodes          FROM PUBLIC;
-REVOKE ALL ON public.cpu            FROM PUBLIC;
-REVOKE ALL ON public.disk           FROM PUBLIC;
-REVOKE ALL ON public.ram            FROM PUBLIC;
-REVOKE ALL ON public.thermal        FROM PUBLIC;
-REVOKE ALL ON public.audit_log      FROM PUBLIC;
-REVOKE ALL ON public.mfa_config     FROM PUBLIC;
-REVOKE ALL ON public.sessions       FROM PUBLIC;
-REVOKE ALL ON public.password_reset FROM PUBLIC;
-REVOKE ALL ON public.vms            FROM PUBLIC;
+-- -----------------------------------------------
+-- CPU predicates
+-- -----------------------------------------------
+CREATE OR ALTER FUNCTION dbo.fn_rls_filter_cpu(
+    @user_id UNIQUEIDENTIFIER,
+    @node_id UNIQUEIDENTIFIER
+)
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN
+    SELECT 1 AS rls_result
+    WHERE (
+        @user_id = CAST(SESSION_CONTEXT(N'app_user_id') AS UNIQUEIDENTIFIER)
+        OR dbo.fn_is_admin() = 1
+    )
+    AND dbo.fn_clearance_check(@node_id) = 1;
+GO
+
+CREATE OR ALTER FUNCTION dbo.fn_rls_block_cpu(
+    @user_id UNIQUEIDENTIFIER,
+    @node_id UNIQUEIDENTIFIER
+)
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN
+    SELECT 1 AS rls_result
+    WHERE (
+        @user_id = CAST(SESSION_CONTEXT(N'app_user_id') AS UNIQUEIDENTIFIER)
+        OR dbo.fn_is_admin() = 1
+    )
+    AND dbo.fn_clearance_check(@node_id) = 1;
+GO
+
+-- -----------------------------------------------
+-- Disk predicates
+-- -----------------------------------------------
+CREATE OR ALTER FUNCTION dbo.fn_rls_filter_disk(
+    @user_id UNIQUEIDENTIFIER,
+    @node_id UNIQUEIDENTIFIER
+)
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN
+    SELECT 1 AS rls_result
+    WHERE (
+        @user_id = CAST(SESSION_CONTEXT(N'app_user_id') AS UNIQUEIDENTIFIER)
+        OR dbo.fn_is_admin() = 1
+    )
+    AND dbo.fn_clearance_check(@node_id) = 1;
+GO
+
+CREATE OR ALTER FUNCTION dbo.fn_rls_block_disk(
+    @user_id UNIQUEIDENTIFIER,
+    @node_id UNIQUEIDENTIFIER
+)
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN
+    SELECT 1 AS rls_result
+    WHERE (
+        @user_id = CAST(SESSION_CONTEXT(N'app_user_id') AS UNIQUEIDENTIFIER)
+        OR dbo.fn_is_admin() = 1
+    )
+    AND dbo.fn_clearance_check(@node_id) = 1;
+GO
+
+-- -----------------------------------------------
+-- RAM predicates
+-- -----------------------------------------------
+CREATE OR ALTER FUNCTION dbo.fn_rls_filter_ram(
+    @user_id UNIQUEIDENTIFIER,
+    @node_id UNIQUEIDENTIFIER
+)
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN
+    SELECT 1 AS rls_result
+    WHERE (
+        @user_id = CAST(SESSION_CONTEXT(N'app_user_id') AS UNIQUEIDENTIFIER)
+        OR dbo.fn_is_admin() = 1
+    )
+    AND dbo.fn_clearance_check(@node_id) = 1;
+GO
+
+CREATE OR ALTER FUNCTION dbo.fn_rls_block_ram(
+    @user_id UNIQUEIDENTIFIER,
+    @node_id UNIQUEIDENTIFIER
+)
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN
+    SELECT 1 AS rls_result
+    WHERE (
+        @user_id = CAST(SESSION_CONTEXT(N'app_user_id') AS UNIQUEIDENTIFIER)
+        OR dbo.fn_is_admin() = 1
+    )
+    AND dbo.fn_clearance_check(@node_id) = 1;
+GO
+
+-- -----------------------------------------------
+-- Thermal predicates
+-- -----------------------------------------------
+CREATE OR ALTER FUNCTION dbo.fn_rls_filter_thermal(
+    @user_id UNIQUEIDENTIFIER,
+    @node_id UNIQUEIDENTIFIER
+)
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN
+    SELECT 1 AS rls_result
+    WHERE (
+        @user_id = CAST(SESSION_CONTEXT(N'app_user_id') AS UNIQUEIDENTIFIER)
+        OR dbo.fn_is_admin() = 1
+    )
+    AND dbo.fn_clearance_check(@node_id) = 1;
+GO
+
+CREATE OR ALTER FUNCTION dbo.fn_rls_block_thermal(
+    @user_id UNIQUEIDENTIFIER,
+    @node_id UNIQUEIDENTIFIER
+)
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN
+    SELECT 1 AS rls_result
+    WHERE (
+        @user_id = CAST(SESSION_CONTEXT(N'app_user_id') AS UNIQUEIDENTIFIER)
+        OR dbo.fn_is_admin() = 1
+    )
+    AND dbo.fn_clearance_check(@node_id) = 1;
+GO
+
+-- -----------------------------------------------
+-- VMs predicates
+-- -----------------------------------------------
+CREATE OR ALTER FUNCTION dbo.fn_rls_filter_vms(
+    @user_id UNIQUEIDENTIFIER,
+    @node_id UNIQUEIDENTIFIER
+)
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN
+    SELECT 1 AS rls_result
+    WHERE (
+        @user_id = CAST(SESSION_CONTEXT(N'app_user_id') AS UNIQUEIDENTIFIER)
+        OR dbo.fn_is_admin() = 1
+    )
+    AND dbo.fn_clearance_check(@node_id) = 1;
+GO
+
+CREATE OR ALTER FUNCTION dbo.fn_rls_block_vms(
+    @user_id UNIQUEIDENTIFIER,
+    @node_id UNIQUEIDENTIFIER
+)
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN
+    SELECT 1 AS rls_result
+    WHERE (
+        @user_id = CAST(SESSION_CONTEXT(N'app_user_id') AS UNIQUEIDENTIFIER)
+        OR dbo.fn_is_admin() = 1
+    )
+    AND dbo.fn_clearance_check(@node_id) = 1;
+GO
+
+-- -----------------------------------------------
+-- Bind security policies
+-- STATE = ON activates the policy immediately.
+-- -----------------------------------------------
+IF NOT EXISTS (
+    SELECT name FROM sys.security_policies WHERE name = N'sp_cpu_rls'
+)
+BEGIN
+    CREATE SECURITY POLICY dbo.sp_cpu_rls
+        ADD FILTER PREDICATE dbo.fn_rls_filter_cpu(user_id, node_id) ON dbo.cpu,
+        ADD BLOCK  PREDICATE dbo.fn_rls_block_cpu (user_id, node_id) ON dbo.cpu
+    WITH (STATE = ON);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT name FROM sys.security_policies WHERE name = N'sp_disk_rls'
+)
+BEGIN
+    CREATE SECURITY POLICY dbo.sp_disk_rls
+        ADD FILTER PREDICATE dbo.fn_rls_filter_disk(user_id, node_id) ON dbo.disk,
+        ADD BLOCK  PREDICATE dbo.fn_rls_block_disk (user_id, node_id) ON dbo.disk
+    WITH (STATE = ON);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT name FROM sys.security_policies WHERE name = N'sp_ram_rls'
+)
+BEGIN
+    CREATE SECURITY POLICY dbo.sp_ram_rls
+        ADD FILTER PREDICATE dbo.fn_rls_filter_ram(user_id, node_id) ON dbo.ram,
+        ADD BLOCK  PREDICATE dbo.fn_rls_block_ram (user_id, node_id) ON dbo.ram
+    WITH (STATE = ON);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT name FROM sys.security_policies WHERE name = N'sp_thermal_rls'
+)
+BEGIN
+    CREATE SECURITY POLICY dbo.sp_thermal_rls
+        ADD FILTER PREDICATE dbo.fn_rls_filter_thermal(user_id, node_id) ON dbo.thermal,
+        ADD BLOCK  PREDICATE dbo.fn_rls_block_thermal (user_id, node_id) ON dbo.thermal
+    WITH (STATE = ON);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT name FROM sys.security_policies WHERE name = N'sp_vms_rls'
+)
+BEGIN
+    CREATE SECURITY POLICY dbo.sp_vms_rls
+        ADD FILTER PREDICATE dbo.fn_rls_filter_vms(user_id, node_id) ON dbo.vms,
+        ADD BLOCK  PREDICATE dbo.fn_rls_block_vms (user_id, node_id) ON dbo.vms
+    WITH (STATE = ON);
+END
+GO
+
+
+-- =====================================================
+-- BLOCK 7: COMPLIANCE TABLES
+-- audit_log, mfa_config, sessions, password_reset
+-- =====================================================
+
+-- -----------------------------------------------
+-- audit_log — append-only, tamper-proof
+-- -----------------------------------------------
+IF OBJECT_ID(N'dbo.audit_log', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.audit_log (
+        log_id          UNIQUEIDENTIFIER    NOT NULL CONSTRAINT DF_audit_log_id DEFAULT NEWID(),
+        user_id         UNIQUEIDENTIFIER    NOT NULL,
+        action_type     NVARCHAR(100)       NOT NULL,
+        target_resource NVARCHAR(255)       NULL,
+        ip_address      NVARCHAR(45)        NULL,
+        session_id      NVARCHAR(255)       NULL,
+        result          NVARCHAR(20)        NOT NULL,
+        logged_at       DATETIME2           NOT NULL CONSTRAINT DF_audit_log_at DEFAULT SYSUTCDATETIME(),
+        detail          NVARCHAR(MAX)       NULL,
+
+        CONSTRAINT PK_audit_log PRIMARY KEY CLUSTERED (log_id),
+        CONSTRAINT CK_audit_action CHECK (action_type IN (
+            N'LOGIN', N'LOGIN_FAILED', N'MFA_FAILED', N'LOCKED',
+            N'LOGOUT', N'PWD_RESET', N'SESSION_EXPIRE', N'QUERY',
+            N'EXPORT', N'CONFIG_CHANGE', N'ACCESS_DENIED'
+        )),
+        CONSTRAINT CK_audit_result CHECK (result IN (N'SUCCESS', N'DENIED', N'FAILED'))
+    );
+END
+GO
+
+-- -----------------------------------------------
+-- mfa_config
+-- -----------------------------------------------
+IF OBJECT_ID(N'dbo.mfa_config', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.mfa_config (
+        mfa_id          UNIQUEIDENTIFIER    NOT NULL CONSTRAINT DF_mfa_id DEFAULT NEWID(),
+        user_id         UNIQUEIDENTIFIER    NOT NULL,
+        mfa_type        NVARCHAR(20)        NOT NULL,
+        secret_hash     NVARCHAR(255)       NOT NULL,
+        is_active       BIT                 NOT NULL CONSTRAINT DF_mfa_active DEFAULT 1,
+        created_at      DATETIME2           NOT NULL CONSTRAINT DF_mfa_created DEFAULT SYSUTCDATETIME(),
+        last_used_at    DATETIME2           NULL,
+
+        CONSTRAINT PK_mfa_config PRIMARY KEY CLUSTERED (mfa_id),
+        CONSTRAINT FK_mfa_user  FOREIGN KEY (user_id) REFERENCES dbo.users(id),
+        CONSTRAINT CK_mfa_type  CHECK (mfa_type IN (N'totp', N'hardware_key', N'sms'))
+    );
+END
+GO
+
+-- -----------------------------------------------
+-- sessions
+-- -----------------------------------------------
+IF OBJECT_ID(N'dbo.sessions', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.sessions (
+        session_id          UNIQUEIDENTIFIER    NOT NULL CONSTRAINT DF_sessions_id DEFAULT NEWID(),
+        user_id             UNIQUEIDENTIFIER    NOT NULL,
+        session_token_hash  NVARCHAR(255)       NOT NULL,
+        ip_address          NVARCHAR(45)        NULL,
+        user_agent          NVARCHAR(500)       NULL,
+        created_at          DATETIME2           NOT NULL CONSTRAINT DF_sessions_created DEFAULT SYSUTCDATETIME(),
+        expires_at          DATETIME2           NOT NULL,
+        revoked             BIT                 NOT NULL CONSTRAINT DF_sessions_revoked DEFAULT 0,
+        revoked_at          DATETIME2           NULL,
+        revoked_reason      NVARCHAR(100)       NULL,
+
+        CONSTRAINT PK_sessions PRIMARY KEY CLUSTERED (session_id),
+        CONSTRAINT FK_sessions_user    FOREIGN KEY (user_id) REFERENCES dbo.users(id),
+        CONSTRAINT CK_sessions_reason  CHECK (revoked_reason IN (N'LOGOUT', N'TIMEOUT', N'ADMIN_REVOKE'))
+    );
+END
+GO
+
+-- -----------------------------------------------
+-- password_reset
+-- -----------------------------------------------
+IF OBJECT_ID(N'dbo.password_reset', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.password_reset (
+        reset_id        UNIQUEIDENTIFIER    NOT NULL CONSTRAINT DF_reset_id DEFAULT NEWID(),
+        user_id         UNIQUEIDENTIFIER    NOT NULL,
+        token_hash      NVARCHAR(255)       NOT NULL,
+        requested_at    DATETIME2           NOT NULL CONSTRAINT DF_reset_requested DEFAULT SYSUTCDATETIME(),
+        expires_at      DATETIME2           NOT NULL,
+        used            BIT                 NOT NULL CONSTRAINT DF_reset_used DEFAULT 0,
+        used_at         DATETIME2           NULL,
+        ip_address      NVARCHAR(45)        NULL,
+
+        CONSTRAINT PK_password_reset PRIMARY KEY CLUSTERED (reset_id),
+        CONSTRAINT FK_reset_user FOREIGN KEY (user_id) REFERENCES dbo.users(id)
+    );
+END
+GO
+
+
+-- =====================================================
+-- BLOCK 8: PERMISSIONS
+--
+-- SQL Server does not have REVOKE ALL FROM PUBLIC —
+-- there is no public grant to revoke.  Instead, we
+-- explicitly GRANT only what each role requires.
+-- DENY is available and used where needed (e.g.,
+-- blocking UPDATE/DELETE on audit_log for admin_user).
+-- =====================================================
 
 -- -----------------------------------------------
 -- app_user permissions
--- Backend service account — limited to what it needs
 -- -----------------------------------------------
 
--- Users table: no direct access — backend uses functions
-REVOKE ALL ON public.users FROM app_user;
-
--- Telemetry: read and insert (RLS enforces row filtering)
-GRANT SELECT, INSERT ON public.cpu      TO app_user;
-GRANT SELECT, INSERT ON public.disk     TO app_user;
-GRANT SELECT, INSERT ON public.ram      TO app_user;
-GRANT SELECT, INSERT ON public.thermal  TO app_user;
-GRANT SELECT, INSERT ON public.vms      TO app_user;
+-- Telemetry: SELECT + INSERT (RLS filters rows)
+GRANT SELECT, INSERT ON dbo.cpu     TO app_user;
+GRANT SELECT, INSERT ON dbo.disk    TO app_user;
+GRANT SELECT, INSERT ON dbo.ram     TO app_user;
+GRANT SELECT, INSERT ON dbo.thermal TO app_user;
+GRANT SELECT, INSERT ON dbo.vms     TO app_user;
 
 -- Nodes: read only
-GRANT SELECT ON public.nodes TO app_user;
+GRANT SELECT ON dbo.nodes TO app_user;
 
--- Sessions: create and revoke — never delete
-GRANT SELECT, INSERT, UPDATE ON public.sessions TO app_user;
+-- Sessions: create and revoke (no delete)
+GRANT SELECT, INSERT, UPDATE ON dbo.sessions TO app_user;
 
--- MFA: read and update last_used_at only
-GRANT SELECT, UPDATE ON public.mfa_config TO app_user;
+-- MFA: read and update last_used_at
+GRANT SELECT, UPDATE ON dbo.mfa_config TO app_user;
 
 -- Password reset: create tokens and mark used
-GRANT SELECT, INSERT, UPDATE ON public.password_reset TO app_user;
+GRANT SELECT, INSERT, UPDATE ON dbo.password_reset TO app_user;
 
--- Audit log: insert only — app writes events, never reads or modifies
-GRANT INSERT ON public.audit_log TO app_user;
+-- Audit log: insert only
+GRANT INSERT ON dbo.audit_log TO app_user;
 
--- Sequence access for IDENTITY columns
-GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO app_user;
+-- Helper functions: execute
+GRANT EXECUTE ON dbo.fn_user_id         TO app_user;
+GRANT EXECUTE ON dbo.fn_is_admin        TO app_user;
+GRANT EXECUTE ON dbo.fn_clearance_check TO app_user;
 
 -- -----------------------------------------------
 -- auditor_user permissions
--- Read-only access to audit and session data only
 -- -----------------------------------------------
-GRANT SELECT ON public.audit_log    TO auditor_user;
-GRANT SELECT ON public.sessions     TO auditor_user;
-GRANT SELECT ON public.mfa_config   TO auditor_user;
-REVOKE SELECT, INSERT, UPDATE, DELETE ON public.vms TO auditor_user;
--- No access to telemetry, users, or nodes
+GRANT SELECT ON dbo.audit_log   TO auditor_user;
+GRANT SELECT ON dbo.sessions    TO auditor_user;
+GRANT SELECT ON dbo.mfa_config  TO auditor_user;
+-- No access to telemetry, users, nodes, or vms
 
 -- -----------------------------------------------
 -- admin_user permissions
--- Full schema access with audit log write-protection
 -- -----------------------------------------------
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin_user;
-GRANT USAGE ON ALL SEQUENCES IN SCHEMA public        TO admin_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.users           TO admin_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.nodes           TO admin_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.cpu             TO admin_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.disk            TO admin_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.ram             TO admin_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.thermal         TO admin_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.vms             TO admin_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.mfa_config      TO admin_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.sessions        TO admin_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.password_reset  TO admin_user;
+GRANT SELECT, INSERT               ON dbo.audit_log        TO admin_user;
 
--- Revoke UPDATE and DELETE on audit_log even for admin
--- Audit log is append-only — tamper-proof (AU.L2-3.3.1)
-REVOKE UPDATE, DELETE ON public.audit_log FROM admin_user;
+-- Audit log is append-only even for admin — tamper-proof
+DENY UPDATE, DELETE ON dbo.audit_log TO admin_user;
 
--- Admin manages MFA enrollment and revocation
--- (already covered by ALL PRIVILEGES above)
+GRANT EXECUTE ON dbo.fn_user_id         TO admin_user;
+GRANT EXECUTE ON dbo.fn_is_admin        TO admin_user;
+GRANT EXECUTE ON dbo.fn_clearance_check TO admin_user;
+GO
 
 
 -- =====================================================
--- BLOCK 8: INDEXES
--- Must come after all tables exist.
--- Postgres uses same CREATE INDEX syntax as SQL Server
--- with minor differences (no included columns needed here).
+-- BLOCK 9: INDEXES
+--
+-- SQL Server index syntax is nearly identical to the
+-- original PostgreSQL syntax.  Partitioned tables require
+-- ON <partition_scheme>(column) on non-clustered indexes
+-- that should be partition-aligned.
 -- =====================================================
 
--- Telemetry: composite user + node (most common filter pattern)
-CREATE INDEX idx_cpu_user_node      ON public.cpu              (user_id, node_id);
-CREATE INDEX idx_disk_user_node     ON public.disk             (user_id, node_id);
-CREATE INDEX idx_ram_user_node      ON public.ram              (user_id, node_id);
-CREATE INDEX idx_thermal_user_node  ON public.thermal          (user_id, node_id);
+-- -----------------------------------------------
+-- Telemetry: user + node composite
+-- -----------------------------------------------
+CREATE INDEX idx_cpu_user_node
+    ON dbo.cpu (user_id, node_id)
+    ON ps_cpu_daily(recorded_at);
 
--- Telemetry: node-only (dashboard/overview queries)
-CREATE INDEX idx_cpu_node           ON public.cpu              (node_id);
-CREATE INDEX idx_disk_node          ON public.disk             (node_id);
-CREATE INDEX idx_ram_node           ON public.ram              (node_id);
-CREATE INDEX idx_thermal_node       ON public.thermal          (node_id);
+CREATE INDEX idx_disk_user_node
+    ON dbo.disk (user_id, node_id)
+    ON ps_disk_daily(recorded_at);
 
--- Timestamp: node + timestamptz
-CREATE INDEX idx_cpu_recorded_at     ON public.cpu     (node_id, recorded_at DESC);
-CREATE INDEX idx_disk_recorded_at    ON public.disk    (node_id, recorded_at DESC);
-CREATE INDEX idx_ram_recorded_at     ON public.ram     (node_id, recorded_at DESC);
-CREATE INDEX idx_thermal_recorded_at ON public.thermal (node_id, recorded_at DESC);
+CREATE INDEX idx_ram_user_node
+    ON dbo.ram (user_id, node_id)
+    ON ps_ram_daily(recorded_at);
 
--- Users: account lockout queries (IA.L2-3.5.3)
-CREATE INDEX idx_users_locked       ON public.users            (account_locked, failed_login_count);
+CREATE INDEX idx_thermal_user_node
+    ON dbo.thermal (user_id, node_id)
+    ON ps_thermal_daily(recorded_at);
 
--- Users: auth provider lookups (IA.L2-3.5.1)
-CREATE INDEX idx_users_provider     ON public.users            (auth_provider, auth_provider_id);
+-- -----------------------------------------------
+-- Telemetry: node-only
+-- -----------------------------------------------
+CREATE INDEX idx_cpu_node
+    ON dbo.cpu (node_id)
+    ON ps_cpu_daily(recorded_at);
 
--- Audit log: user activity timeline (AU.L2-3.3.1)
-CREATE INDEX idx_audit_user_time    ON public.audit_log        (user_id, logged_at);
+CREATE INDEX idx_disk_node
+    ON dbo.disk (node_id)
+    ON ps_disk_daily(recorded_at);
 
--- Audit log: action type queries (AU.L2-3.3.1)
-CREATE INDEX idx_audit_action_time  ON public.audit_log        (action_type, logged_at);
+CREATE INDEX idx_ram_node
+    ON dbo.ram (node_id)
+    ON ps_ram_daily(recorded_at);
 
--- Audit log: result filtering (AU.L2-3.3.1)
-CREATE INDEX idx_audit_result       ON public.audit_log        (result, logged_at);
+CREATE INDEX idx_thermal_node
+    ON dbo.thermal (node_id)
+    ON ps_thermal_daily(recorded_at);
 
--- Sessions: active session lookup by user
-CREATE INDEX idx_sessions_user      ON public.sessions         (user_id, expires_at);
+-- -----------------------------------------------
+-- Telemetry: node + timestamp (DESC)
+-- -----------------------------------------------
+CREATE INDEX idx_cpu_recorded_at
+    ON dbo.cpu (node_id, recorded_at DESC)
+    ON ps_cpu_daily(recorded_at);
 
--- Sessions: token validation (most frequent session query)
-CREATE INDEX idx_sessions_token     ON public.sessions         (session_token_hash);
+CREATE INDEX idx_disk_recorded_at
+    ON dbo.disk (node_id, recorded_at DESC)
+    ON ps_disk_daily(recorded_at);
 
--- Sessions: active/expired sweep queries
-CREATE INDEX idx_sessions_active    ON public.sessions         (revoked, expires_at);
+CREATE INDEX idx_ram_recorded_at
+    ON dbo.ram (node_id, recorded_at DESC)
+    ON ps_ram_daily(recorded_at);
 
--- MFA: active method lookup per user
-CREATE INDEX idx_mfa_user           ON public.mfa_config       (user_id, is_active);
+CREATE INDEX idx_thermal_recorded_at
+    ON dbo.thermal (node_id, recorded_at DESC)
+    ON ps_thermal_daily(recorded_at);
 
--- Password reset: expiry check per user
-CREATE INDEX idx_reset_user         ON public.password_reset   (user_id, expires_at);
+-- -----------------------------------------------
+-- users
+-- -----------------------------------------------
+CREATE INDEX idx_users_locked
+    ON dbo.users (account_locked, failed_login_count);
 
--- Password reset: token validation
-CREATE INDEX idx_reset_token        ON public.password_reset   (token_hash);
+CREATE INDEX idx_users_provider
+    ON dbo.users (auth_provider, auth_provider_id);
 
--- VMs: node + time (dashboard overview)
-CREATE INDEX idx_vms_node_time       ON public.vms     (node_id, recorded_at DESC);
+-- -----------------------------------------------
+-- audit_log
+-- -----------------------------------------------
+CREATE INDEX idx_audit_user_time
+    ON dbo.audit_log (user_id, logged_at);
 
--- VMs: status filter (find all running VMs quickly)
-CREATE INDEX idx_vms_status          ON public.vms     (status, recorded_at DESC);
+CREATE INDEX idx_audit_action_time
+    ON dbo.audit_log (action_type, logged_at);
 
--- VMs: user + node (RLS filter pattern)
-CREATE INDEX idx_vms_user_node       ON public.vms     (user_id, node_id);
+CREATE INDEX idx_audit_result
+    ON dbo.audit_log (result, logged_at);
+
+-- -----------------------------------------------
+-- sessions
+-- -----------------------------------------------
+CREATE INDEX idx_sessions_user
+    ON dbo.sessions (user_id, expires_at);
+
+CREATE INDEX idx_sessions_token
+    ON dbo.sessions (session_token_hash);
+
+CREATE INDEX idx_sessions_active
+    ON dbo.sessions (revoked, expires_at);
+
+-- -----------------------------------------------
+-- mfa_config
+-- -----------------------------------------------
+CREATE INDEX idx_mfa_user
+    ON dbo.mfa_config (user_id, is_active);
+
+-- -----------------------------------------------
+-- password_reset
+-- -----------------------------------------------
+CREATE INDEX idx_reset_user
+    ON dbo.password_reset (user_id, expires_at);
+
+CREATE INDEX idx_reset_token
+    ON dbo.password_reset (token_hash);
+
+-- -----------------------------------------------
+-- vms
+-- -----------------------------------------------
+CREATE INDEX idx_vms_node_time
+    ON dbo.vms (node_id, recorded_at DESC);
+
+CREATE INDEX idx_vms_status
+    ON dbo.vms (status, recorded_at DESC);
+
+CREATE INDEX idx_vms_user_node
+    ON dbo.vms (user_id, node_id);
+GO
+
+
+-- =====================================================
+-- BLOCK 10: SQL AGENT MAINTENANCE JOB
+--
+-- Replaces pg_cron + pg_partman run_maintenance().
+-- Runs daily at midnight UTC.
+-- Job steps:
+--   Step 1 — Add tomorrow's partition boundary (SPLIT)
+--   Step 2 — Drop partitions older than 7 days (MERGE)
+--
+-- SPLIT adds a new right boundary at the start of the
+-- day 8 days from now, creating a fresh empty partition.
+-- MERGE collapses the oldest boundary into the catch-all
+-- leftmost partition, discarding old data.
+--
+-- NOTE: The job is created disabled (enabled = 0) so
+-- you can review and enable it manually after deployment.
+-- Change @server_name to match your SQL Server instance.
+-- =====================================================
+
+USE msdb;
+GO
+
+IF NOT EXISTS (
+    SELECT job_id FROM msdb.dbo.sysjobs WHERE name = N'Telemetry_Partition_Maintenance'
+)
+BEGIN
+    EXEC sp_add_job
+        @job_name       = N'Telemetry_Partition_Maintenance',
+        @enabled        = 0,          -- enable manually after review
+        @description    = N'Daily rolling partition split (add future) and merge (drop old) for telemetry tables.',
+        @category_name  = N'Database Maintenance';
+
+    -- Step 1: Add next boundary (SPLIT) for all four partition functions
+    EXEC sp_add_jobstep
+        @job_name       = N'Telemetry_Partition_Maintenance',
+        @step_name      = N'Split - Add Future Partition',
+        @subsystem      = N'TSQL',
+        @database_name  = N'TelemetryDB',
+        @command        = N'
+DECLARE @new_boundary DATETIME2 = CAST(DATEADD(DAY, 8, CAST(GETUTCDATE() AS DATE)) AS DATETIME2);
+
+-- Ensure FG_Telemetry has a next-used filegroup allocated
+ALTER PARTITION SCHEME ps_cpu_daily     NEXT USED FG_Telemetry;
+ALTER PARTITION SCHEME ps_disk_daily    NEXT USED FG_Telemetry;
+ALTER PARTITION SCHEME ps_ram_daily     NEXT USED FG_Telemetry;
+ALTER PARTITION SCHEME ps_thermal_daily NEXT USED FG_Telemetry;
+
+-- Split each partition function to add the new boundary
+ALTER PARTITION FUNCTION pf_cpu_daily()     SPLIT RANGE (@new_boundary);
+ALTER PARTITION FUNCTION pf_disk_daily()    SPLIT RANGE (@new_boundary);
+ALTER PARTITION FUNCTION pf_ram_daily()     SPLIT RANGE (@new_boundary);
+ALTER PARTITION FUNCTION pf_thermal_daily() SPLIT RANGE (@new_boundary);
+';
+
+    -- Step 2: Drop old boundary (MERGE) for partitions older than 7 days
+    EXEC sp_add_jobstep
+        @job_name       = N'Telemetry_Partition_Maintenance',
+        @step_name      = N'Merge - Remove Expired Partition',
+        @subsystem      = N'TSQL',
+        @database_name  = N'TelemetryDB',
+        @command        = N'
+DECLARE @old_boundary DATETIME2 = CAST(DATEADD(DAY, -7, CAST(GETUTCDATE() AS DATE)) AS DATETIME2);
+
+-- Merging a boundary deletes the partition and its data
+ALTER PARTITION FUNCTION pf_cpu_daily()     MERGE RANGE (@old_boundary);
+ALTER PARTITION FUNCTION pf_disk_daily()    MERGE RANGE (@old_boundary);
+ALTER PARTITION FUNCTION pf_ram_daily()     MERGE RANGE (@old_boundary);
+ALTER PARTITION FUNCTION pf_thermal_daily() MERGE RANGE (@old_boundary);
+';
+
+    -- Schedule: daily at 00:00 UTC
+    EXEC sp_add_schedule
+        @schedule_name      = N'Daily_Midnight_UTC',
+        @freq_type          = 4,       -- daily
+        @freq_interval      = 1,
+        @active_start_time  = 000000;  -- 00:00:00
+
+    EXEC sp_attach_schedule
+        @job_name       = N'Telemetry_Partition_Maintenance',
+        @schedule_name  = N'Daily_Midnight_UTC';
+
+    -- Attach to the local server
+    EXEC sp_add_jobserver
+        @job_name   = N'Telemetry_Partition_Maintenance',
+        @server_name = N'(LOCAL)';
+END
+GO
+
+USE TelemetryDB;
+GO
+
+-- =====================================================
+-- END OF SCHEMA
+-- =====================================================
