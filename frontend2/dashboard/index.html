@@ -50,54 +50,39 @@
             }
         </style>
     </head>
-    <body>
-            <h1>Monitoring Dashboard</h1>
-            box-sizing: border-box;
-        }
-        canvas, .bottom-card { 
-            background-color: #ffffff;
-            border-radius: 5px;
-            border-style: solid;
-            border-color: white;
-        }
-
-        .top,
-        .bottom {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-        }
-
-    </style>
-</head>
-
 <body>
+
     <div class="head">
         <h1>Monitoring Dashboard</h1>
-        
                 <div class="container">
                     <h2>Welcome, <span id="user"></span>!</h2> 
                     <button type="button" id="logout_button" onclick="logout()">Logout</button>
-                </div> 
+                </div>
+
                 <div>
                     <p id="message"></p>
                 </div>
+
 <<<<<<< Updated upstream
                 <div>
                     <p>Last update: <span id="logDay">Receiving log date...</span> <span id="logTime">Receiving log time...</span></p>
                     <p>Current Date: <span id="today">Receiving today's date...</span> <span id="timeNow">Receiving current time...</span></p>
                 </div>
+
+                <br>
+
                 <table class="full-width">
                     <tr class="line">
-        <td colspan="1">
-          <h1 >Dashboard</h1>
-        </td>
+                        <td colspan="1">
+                            <h1 >Dashboard</h1>
+                        </td>
 
-        <td>
-          <h1 align="center">Graphs</h1>
-        </td>
-      </tr>
-      <tr>
+                        <td>
+                            <h1 align="center">Graphs</h1>
+                        </td>
+                    </tr>
+
+        <tr>
 
         <td colspan="1" class="line">
           <details class="node" open="true"> 
