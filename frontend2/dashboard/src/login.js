@@ -137,6 +137,7 @@ function loginUser(username,password) {
 
     showMessage(registerMessage, "Login successful", "success");
     localStorage.setItem("loggedInUser", JSON.stringify(user));
+    window.location.href = './dashboard.html';
 }
 
 function submitForgotPasswordForm(event) {

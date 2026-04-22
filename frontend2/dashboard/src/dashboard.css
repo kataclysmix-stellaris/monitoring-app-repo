@@ -71,6 +71,7 @@ body {
 
     
 #logout_button {
+  --transition: 0.3s ease;
     margin-top: 0.5rem;
     margin-right: 10px;
     padding: 1rem 1.1rem;

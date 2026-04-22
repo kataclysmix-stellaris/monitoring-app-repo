@@ -1,183 +1,108 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-    <head>
-        <title>System Dashboard</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="src/style.css">
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-        <style>
-            body { 
-                padding: 20px;
-                background-color: #1c2029;
-                color: white;
-            }
-            .container {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                width: 100%;
-            }
-            .container h2 {
-                margin: 0;
-            }
-            h1, h2 { 
-                margin: 0 0 10px;
-                color: white;
-            }
-            .dashboard {
-                display: flex;
-                flex-direction: column;
-                gap: 20px;
-            }
-            .card {
-                padding: 10px;
-                border-radius: 25px;
-                width: 100%;
-                box-sizing: border-box;
-            }
-            canvas, .bottom-card { 
-                background-color: var(--bg-light);
-                border-radius: 5px;
-                border-style: solid;
-                border-color: white;
-            }
-            .top,
-            .bottom {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 20px;
-            }
-        </style>
-    </head>
-<body>
-    <div class="head">
-        <h1>Monitoring Dashboard</h1>
-            <div class="container">
-                <h2>Welcome, <span id="user"></span>!</h2> 
-                <button type="button" id="logout_button" onclick="logout()">Logout</button>
-        </div>
-        <div>
-            <p id="message"></p>
-        </div>
-        <div>
-            <p>Last update: <span id="logDay">Receiving log date...</span> <span id="logTime">Receiving log time...</span></p>
-            <p>Current Date: <span id="today">Receiving today's date...</span> <span id="timeNow">Receiving current time...</span></p>
-        </div>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>project</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="src/login.css"/>
+  </head>
+  <body class="min-h-screen">
+    <div id="app" class="bg-[linear-gradient(55deg,var(--midnight-violet),var(--indigo-bloom))] min-h-screen flex flex-col text-(--sky-blue)">
+      <div class="min-h-screen px-6">
+        <h1 class="font-black text-center mt-6 mb-16 text-4xl tracking-[0.25em]">
+          <button id="moveToRegister" class="cursor-pointer transition duration-300">Register</button> / 
+          <button id="moveToLogin" class="cursor-pointer transition duration-300 opacity-50">Login</button>
+        </h1>
+        <form id='registerForm' class="w-full max-w-md mx-auto bg-(--dark-amethyst) p-5 rounded-2xl
+          border-2 ring-4 ring-(--slate-blue) border-(--violet-twilight)
+        ">
+          <fieldset class="flex flex-col gap-y-8 min-w-full">
+            <div class="flex flex-col justify-center">
+              <p id="registerFormMessage" class="
+                text-center opacity-0 transition duration-300
+                font-bold text-lg mb-2
+                [text-shadow:1px_1px_1.5px_rgba(0,0,0,0.75)]
+              ">Placeholder Message</p>
+              <label for='usernameInput' class=" tracking-wider
+                font-extrabold text-xl pl-4 mb-2 w-fit hover:scale-110
+                transition duration-300 cursor-pointer
+              ">Username:</label>
+              <input type="text" id='usernameInput' placeholder="Username" class="
+                bg-(--violet-twilight) rounded-xl px-3 py-1
+                focus:outline-none border-3 border-transparent focus:border-(--cobalt-blue-200)
+                focus:bg-(--slate-blue)
+                transition duration-300 hover:scale-102
+                hover:border-(--soft-periwinkle)
+                hover:bg-(--slate-blue)
+                focus:ring-4 ring-(--slate-blue)
+                focus:scale-102 cursor-text
+              "/>
+            </div>
+
+            <div class="flex flex-col justify-center" id="emailInputContainer">
+              <label for='emailInput' class=" tracking-wider
+                font-extrabold text-xl pl-4 mb-2 w-fit hover:scale-110
+                transition duration-300 cursor-pointer
+              ">Email:</label>
+              <input type="email" id='emailInput' placeholder="Enter your email" class="
+                bg-(--violet-twilight) rounded-xl px-3 py-1
+                focus:outline-none border-3 border-transparent focus:border-(--cobalt-blue-200)
+                focus:bg-(--slate-blue)
+                transition duration-300 hover:scale-102
+                hover:border-(--soft-periwinkle)
+                hover:bg-(--slate-blue)
+                focus:ring-4 ring-(--slate-blue)
+                focus:scale-102 cursor-text
+              "/>
+            </div>
+
+            <div class="flex flex-col justify-center">
+              <label for='passwordInput' class="tracking-wider
+                font-extrabold text-xl pl-4 mb-2 w-fit hover:scale-110
+                transition duration-300 cursor-pointer
+              ">Password:</label>
+              <input type="password" id='passwordInput' placeholder="Enter your password" class="
+                bg-(--violet-twilight) rounded-xl px-3 py-1
+                focus:outline-none border-3 border-transparent focus:border-(--cobalt-blue-200)
+                focus:bg-(--slate-blue)
+                transition duration-300 hover:scale-102
+                hover:border-(--soft-periwinkle)
+                hover:bg-(--slate-blue)
+                focus:ring-4 ring-(--slate-blue)
+                focus:scale-102 cursor-text
+              "/>
+
+              <a href="forgetPassword.html" id="forgotPassword" class="
+                mt-2 mx-auto font-semibold tracking-wider brightness-75
+                transition duration-300 cursor-pointer w-fit hidden
+                hover:brightness-100 hover:scale-105
+                focus:brightness-100 focus:scale-105 focus:outline-none
+              ">Forgot Password?</a>
+            </div>
+
+            <div class="flex justify-center mt-8">
+              <button type="submit" class="w-[62.5%]
+                text-center bg-(--cobalt-blue-900)
+                py-1 rounded-xl
+                focus:outline-none border-2 border-transparent
+                focus:border-(--cobalt-blue-600)
+                focus:bg-(--cobalt-blue-700) focus:scale-x-105 
+                hover:border-(--cobalt-blue-600) hover:scale-x-105
+                hover:bg-(--cobalt-blue-700)
+                shadow-[inset_0_0_8px(--cobalt-blue-800)
+                focus:shadow-[inset_0_0_8px(--cobalt-blue-500)
+                hover:shadow-[inset_0_0_8px(--cobalt-blue-500)
+                transition duration-300
+                cursor-pointer tracking-[0.15em] font-bold text-xl
+              ">Submit</button>
+            </div>
+          </fieldset>
+        </form>
+      </div>
     </div>
-        <br>
-        <table class="full-width">
-            <tr class="line">
-                <td colspan="1">
-                    <h1>Dashboard</h1>
-                </td>
-                <td>
-                    <h1 align="center">Graphs</h1>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="1" class="line">
-                    <details class="node" open="true"> 
-                        <summary class="nodeName" id="node1">Node 1</summary>
-                            <ul>
-                                <li class="vmObject" id="one1">VM 1</li>
-                                <li class="vmObject" id="one2">VM 2</li>
-                                <li class="vmObject" id="one3">VM 3</li>
-                                <li class="vmObject" id="one4">VM 4</li>
-                                <li class="vmObject" id="one5">VM 5</li>
-                            </ul>
-                    </details>
-                    <details class="node">
-                        <summary class="nodeName" id="node2">Node 2</summary>
-                            <ul>
-                                <li class="vmObject" id="two1">VM 1</li>
-                                <li class="vmObject" id="two2">VM 2</li>
-                                <li class="vmObject" id="two3">VM 3</li>
-                                <li class="vmObject" id="two4">VM 4</li>
-                                <li class="vmObject" id="two5">VM 5</li>
-                            </ul>
-                    </details>
-                    <details class="node">
-                        <summary class="nodeName" id="node3">Node 3</summary>
-                            <ul>
-                                <li class="vmObject" id="three1">VM 1</li>
-                                <li class="vmObject" id="three2">VM 2</li>
-                                <li class="vmObject" id="three3">VM 3</li>
-                                <li class="vmObject" id="three4">VM 4</li>
-                                <li class="vmObject" id="three5">VM 5</li>
-                            </ul>
-                    </details>
-                    <div class="display-section">
-                        <hr>
-                            <h3>Display</h3>
-                        <hr>
-                        <br>
-                            <label>
-                                <input type="checkbox" id="cpuCheck" checked> CPU
-                            </label>
-                            <label>
-                                <input type="checkbox" id="ramCheck" checked> RAM
-                            </label>
-                            <label>
-                                <input type="checkbox" id="storageCheck" checked> Storage
-                            </label>
-                            <label>
-                                <input type="checkbox" id="logsCheck" checked> Logs
-                            </label>
-                            <label>
-                                <input type="checkbox" id="tempCheck" checked> Temperature
-                            </label>
-                                <div id="tempUnits" class="tempUnits">
-                                    <label><input type="radio" id="fahrenheit" name="unit" value="f" checked> Fahrenheit</label>
-                                    <label><input type="radio" id="celsius" name="unit" value="c"> Celsius</label>
-                                </div>
-                            <label><input type="checkbox" id="nodeStatusCheck" checked> Status</label>
-                    </div>
-                </td>
-                <td>
-                    <div class="dashboard">
-                        <div class="top">
-                            <div class="card" id="cpuDisplay">
-                                <h3>CPU Utilization</h3> 
-                                <canvas id="cpuChart" height="150"></canvas>
-                            </div>
-                            <div class="card" id="ramDisplay">     
-                                <h3>RAM Usage</h3>
-                                <canvas id="ramChart" height="150"></canvas>
-                            </div>
-                            <div class="card" id="storageDisplay">
-                                <h3>Storage</h3>
-                                <canvas id="storageChart" height="150"></canvas>
-                            </div>
-                        </div>
-                            <div class="bottom">
-                                <div class="card" id="logsDisplay">
-                                    <h3>Logs</h3>
-                                    <div class="bottom-card">
-                                        <ol class="logsList">
-                                            <li>Receiving logs...</li>
-                                        </ol>
-                                    </div>
-                                </div>
-                                <div class="card" id="tempDisplay">
-                                    <h3>Thermal</h3>
-                                    <div class="bottom-card">
-                                        <p>CPU Temperature: <span id="cpuTemp">N/A</span></p>
-                                        <p>System Temperature: <span id="sysTemp">N/A</span></p>
-                                    </div>
-                                </div>
-                                <div class="card" id="nodeStatusDisplay"> 
-                                    <h3>Node Status</h3>
-                                    <div class="bottom-card">
-                                        <p id="nodeStatus" class="text-2xl">Receiving...</p>
-                                    </div>
-                                </div> 
-                            </div>
-                        </div> 
-                    </td>
-                </tr>
-            </table>
-        <script type="module" src="./src/main.js"></script>
-        <script src="./src/script.js"></script>
-    </body>
+    <script type="module" src="./src/loginModule.js"></script>
+    <script src="./src/login.js"></script>
+  </body>
 </html>
