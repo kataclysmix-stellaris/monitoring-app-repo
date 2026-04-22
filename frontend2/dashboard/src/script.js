@@ -42,7 +42,7 @@ tempToggle.forEach(radio => {
 function formatTemp(value) {
   if (value === null) return 'N/A';
 
-  if (tempUnit === 'c') {
+  if (tempUnit == 'c') {
     return `${toCelsius(value).toFixed(1)}°C`;
   }
 
@@ -204,7 +204,6 @@ async function initCharts() {
         storageChart.data.datasets[0].data = [data.disk_percent, 100 - data.disk_percent];
         ramChart.data.datasets[0].data = [data.ram_percent, 100 - data.ram_percent];
         document.getElementById('nodeStatus').textContent = `${getNodeStatus(data)}`;
-        updateTemperature(data);
         cpuChart.update();
         storageChart.update();
         ramChart.update();
@@ -213,6 +212,7 @@ async function initCharts() {
     // Updates clock every half-second
     setInterval(async () => {
         updateTime();
+        updateTemperature(data);
     }, 500)
 }
 
