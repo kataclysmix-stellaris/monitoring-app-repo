@@ -135,6 +135,10 @@ button:hover, button:focus{
     width: 300px;
 }
 
+.bottom-card li {
+    counter-reset: unset;        /* start counter */
+}
+
   .box {
     width: 300px;
     height: 400px;
