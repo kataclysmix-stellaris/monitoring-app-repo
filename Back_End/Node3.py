@@ -8,138 +8,134 @@ import datetime #time gets the time for the json file so sql can use that to mak
 import requests  
 import os  
 
+URL = "https://"
+
 #if any of these are not recognised do "pip install name"
 
-
-
-# -------------------- NODE ID --------------------
-
-node_id_path = "C:\\ProgramData\\node_id.txt"#open the node id text file to get node id
-
-try:
-    with open(node_id_path, "r") as f:
-        node_id = f.read().strip()#gets the node id for machine
-except:
-    node_id = "UNKNOWN_NODE"#if unkown node assigns unknown node
-
-#------------------------grab full data node------------------------------
+# -------------------- MAIN LOOP --------------------
 
 psutil.cpu_percent(interval=None) #starts the call then waits so it works the next time
 time.sleep(1)#sleeps to make sure it working
 
-#CPU
+while True:
 
-cpu_percent = psutil.cpu_percent(interval=1)#grabs average cpu percent over the course of one second
+    #------------------------collect data-------------------------------------
 
-cpu_per_core = psutil.cpu_percent(interval=1, percpu=True)#grabs each cpu cores percent over the course of one second
+    try:
+        #CPU
+        cpu_percent = psutil.cpu_percent(interval=1)
+        cpu_per_core = psutil.cpu_percent(interval=1, percpu=True)
+        cpu_freq = psutil.cpu_freq()._asdict()
 
-cpu_freq = psutil.cpu_freq()._asdict()#grabs the cpu frequency then converts it to Dict
+        #RAM
+        ram_used = (psutil.virtual_memory().used)/1073741824
+        ram_total = (psutil.virtual_memory().total)/1073741824
+        ram_percent = psutil.virtual_memory().percent
+        swap_percent = psutil.swap_memory().percent
 
-#RAM
+        #Disk
+        disk_data = []
+        for part in psutil.disk_partitions():
+            usage = psutil.disk_usage(part.mountpoint)
+            disk_data.append({
+                "mount": part.mountpoint,
+                "total": usage.total / 1073741824,
+                "used": usage.used / 1073741824,
+                "percent": usage.percent
+            })
 
-ram_used = (psutil.virtual_memory().used)/1073741824#grabs ram used then dived to make it in GB
+        disk_total = sum(d["total"] for d in disk_data)
+        disk_used = sum(d["used"] for d in disk_data)
+        disk_percent = (disk_used / disk_total) * 100 if disk_total > 0 else 0
+        read_bytes = (psutil.disk_io_counters().read_bytes)/1073741824
+        write_bytes = (psutil.disk_io_counters().write_bytes)/1073741824
 
-ram_total = (psutil.virtual_memory().total)/1073741824#grabs ram total then dived to make it in GB
+        print("OK: Hardware data collected")
 
-ram_percent = psutil.virtual_memory().percent#grabs ram percent
+    except Exception as e:
+        print(f"ERROR collecting hardware data: {e}")
+        time.sleep(5)
+        continue
 
-swap_percent = psutil.swap_memory().percent#grabs swap percent which is the percentage of hard drive space used as virtual memory
+    #Thermal
+    cpu_temp = None
+    system_temp = None
+    try:
+        temps = psutil.sensors_temperatures()
+        if not temps:
+            print("WARNING: Temperature sensors not available")
+        else:
+            cpu_sensors = temps.get('coretemp', [])
+            cpu_temp = cpu_sensors[0].current if cpu_sensors else None
+            system_sensors = temps.get('nct6791', [])
+            system_temp = system_sensors[0].current if system_sensors else None
+    except AttributeError:
+        print("WARNING: sensors_temperatures() not supported on this OS")
+    except Exception as e:
+        print(f"WARNING: Temp collection error: {e}")
 
-#Disk
+    #Time
+    Time = datetime.datetime.now()
+    date_log = Time.strftime("%x")
+    time_hour_log = Time.strftime("%I")
+    time_minute_log = Time.strftime("%M")
+    time_meridiem_log = Time.strftime("%p")
+    time_log = (time_hour_log + ":" + time_minute_log + " " + time_meridiem_log)
 
-disk_data = []#holds all the data
+    #------------------------build JSON---------------------------------------
 
-for part in psutil.disk_partitions():#provides details of all mounted disk partitions as a list of named tuples
-    usage = psutil.disk_usage(part.mountpoint)#goes through the named tuples and access the mountpoint attribute of each
-    disk_data.append({#for each tuple adds the data needed to disk data
-        "mount": part.mountpoint,#gets the mountpont
-        "total": usage.total / 1073741824,#total disk converted to GB
-        "used": usage.used / 1073741824,#total disk used converted to GB
-        "percent": usage.percent#disk percent
-    })
+    data = {
+        "cpu_percent": round(cpu_percent, 2),
+        "cpu_per_core": cpu_per_core,
+        "cpu_freq": cpu_freq,
+        "ram_used": round(ram_used, 2),
+        "ram_total": round(ram_total, 2),
+        "ram_percent": round(ram_percent, 2),
+        "swap_percent": round(swap_percent, 2),
+        "disk_total": round(disk_total, 2),
+        "disk_used": round(disk_used, 2),
+        "disk_percent": round(disk_percent, 2),
+        "read_bytes": round(read_bytes, 2),
+        "write_bytes": round(write_bytes, 2),
+        "cpu_temp": cpu_temp,
+        "system_temp": system_temp,
+        "date_log": date_log,
+        "time_log": time_log
+    }
 
-disk_total = sum(d["total"] for d in disk_data)#finds all the total data and sums them to get full total
-disk_used = sum(d["used"] for d in disk_data)#finds all the used data and sums them to get full used
-
-disk_percent = (disk_used / disk_total) * 100 if disk_total > 0 else 0#finds the percent by diveding used by total
-
-read_bytes = (psutil.disk_io_counters().read_bytes)/1073741824#grabs the read bytes and converts it to GB
-
-write_bytes = (psutil.disk_io_counters().write_bytes)/1073741824#grabs the write bytes and converts it to GB
-
-#Thermal
-
-#set to none incase of failing to get the temp
-cpu_temp = None#temp of CPU
-system_temp = None#temp of the motherboard
-
-try:
-    temps = psutil.sensors_temperatures()#grabs all the sensors temps
-    if not temps:#there is possiblity espicaly on window that temp does not work
-        print("Temperature sensors not supported on this system or no data available.")#informs user that the sensore arn't working
-    else:#if there is info
-        cpu_sensors = temps.get('coretemp', [])#grabs the core temps and grabs the current temp of cpu if it exist 
-        cpu_temp = cpu_sensors[0].current if cpu_sensors else None
-
-        system_sensors = temps.get('nct6791', [])#grabs the system temps and grabs the current temp of motherboard if it exist 
-        system_temp = system_sensors[0].current if system_sensors else None
-
-except AttributeError:#checks to see if OS allows grabing tmpetures
-    print("psutil.sensors_temperatures() is not supported on this OS.")
-except Exception as e:#check to see if there is another problem
-    print(f"An error occurred: {e}")
-
-#------------------------get info for Json--------------------------------
-
-Time = datetime.datetime.now()#grabs full time 
-date_log = Time.strftime("%x")#gets Local version of dat ei 12/31/18
-time_hour_log = Time.strftime("%I")#grabs hour 00-12
-time_minute_log = Time.strftime("%M")#grabs minute 00-59
-time_meridiem_log = Time.strftime("%p")#gets wether its AM or PM
-time_log = (time_hour_log + ":" + time_minute_log + " " + time_meridiem_log)#combines them all into a understadable time log
-
-
-data = {#uses all the data collected and converts it into a json file
-    "cpu_percent": round(cpu_percent, 2),
-    "cpu_per_core": cpu_per_core,
-    "cpu_freq": cpu_freq,
-    "ram_used": round(ram_used, 2),
-    "ram_total": round(ram_total, 2),
-    "ram_percent": round(ram_percent, 2),
-    "swap_percent": round(swap_percent, 2),
-    "disk_total": round(disk_total, 2),
-    "disk_used": round(disk_used, 2),
-    "disk_percent": round(disk_percent, 2),
-    "read_bytes": round(read_bytes, 2),
-    "write_bytes": round(write_bytes, 2),
-    "cpu_temp": cpu_temp,
-    "system_temp": system_temp,
-    "date_log": date_log,
-    "time_log": time_log
-}
+    try:
+        json_string = json.dumps(data, indent=4)
+        with open('/docker-app/data/data_string.json', 'w') as file:
+            file.write(json_string)
+        print("OK: JSON file written")
+    except Exception as e:
+        print(f"ERROR writing JSON file: {e}")
 
 
-#------------------------put info on Json---------------------------------
+    #------------------------send the data to API-----------------------------
 
-json_string = json.dumps(data, indent=4)
-with open('data_string.json', 'w') as file:#put in w mode so it can write and will make the file if missing
-    file.write(json_string)
+    API_KEY = os.environ.get("MY_API_KEY")
+    if not API_KEY:
+        print("WARNING: MY_API_KEY environment variable is not set")
 
-#------------------------send the Json to API---------------------------------
-#send the data to API
-try:
-    API_KEY = os.environ.get("MY_API_KEY")#find API key stored in Eviromental variable(for security)
-except:
-    print("failed to get key")
-headers = {  #authorisation to get into the API sent with data  
-    "Authorization": f"Bearer {API_KEY}",   
-    "Content-Type": "application/json" 
-}  
-try:
-    response = requests.post(URL, json=data, headers=headers)  #send data to API
-    if response.status_code == 200:  #if it sent correctly 
-        print("sent successfully")
-    else:  #if there was a problem sending
-        print(f"Error: {response.status_code} - {response.text}")  
-except Exception as e:#if an error accoured in the sender instead of during the data being sent
-    print(f"An error occurred: {e}")
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        response = requests.post(URL, json=data, headers=headers)
+        if response.status_code == 200:
+            print("OK: Data sent successfully")
+        else:
+            print(f"ERROR sending data: HTTP {response.status_code} - {response.text}")
+    except NameError:
+        print("WARNING: URL is not defined yet - skipping send")
+    except requests.exceptions.ConnectionError as e:
+        print(f"ERROR: Could not connect to API - {e}")
+    except Exception as e:
+        print(f"ERROR sending data: {e}")
+
+    # -------------------- WAIT 5 SECONDS --------------------
+    print("Waiting 5 seconds...")
+    time.sleep(5)
