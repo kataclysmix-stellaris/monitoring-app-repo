@@ -10,13 +10,13 @@ import os
 
 #if any of these are not recognised do "pip install name"
 
-# -------------------- setup --------------------
+#------------------------setup--------------------------------------------
 
 URL = "https://"
 node_id = "1"
 wait_time = 5
 
-# -------------------- MAIN LOOP --------------------
+#------------------------Main Loop----------------------------------------
 
 psutil.cpu_percent(interval=None) #starts the call then waits so it works the next time
 time.sleep(1)#sleeps to make sure it working
@@ -141,6 +141,6 @@ while True:
     except Exception as e:
         print(f"ERROR sending data: {e}")
 
-    # -------------------- WAIT 5 SECONDS --------------------
+    #------------------------Wait 5 Seconds-----------------------------------
     print(f"Waiting {wait_time} seconds...")
     time.sleep(wait_time)
