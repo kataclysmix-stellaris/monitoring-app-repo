@@ -3,6 +3,7 @@ from django.http import JsonResponse, HttpResponse
 import json, pyodbc, datetime, django_cryptography
 from django.views.decorators.csrf import csrf_exempt
 from psycopg2.extras import Json
+import psycopg2
 
 #csrf_exempt temporary for testing
 @csrf_exempt
@@ -13,7 +14,12 @@ def home(request):
     
     #retrieves file sent
     file = request.FILES.get("file")
-    jsondata = json.load(file)
+    if not file:
+        return JsonResponse({"error":"file not found"}, status=400)
+    try:
+        jsondata = json.load(file)
+    except Exception:
+        return JsonResponse({"error":"invalid JSON"}, status=400)
     #rules checks if values are valid before sending -- rules for other datatypes need added
     try:
         rules = {
@@ -36,6 +42,7 @@ def home(request):
         }    
 
         if all(rules[key](jsondata.get(key)) for key in rules):
+            
             #return will need to update the db once it is added
             # return JsonResponse(jsondata, safe=False)
             pass
@@ -51,37 +58,54 @@ def home(request):
     
     #connect to DB, insert
     #EDIT DBNAME, USER, AND PASSWORD FOR DB
-    
-    conn = pyodbc.connect(
-        'DRIVER={ODBC Driver 17 for SQL Server};'
-        'SERVER=192.168.30.134,1433;'
-        'DATABASE=Telemetry data;'
-        'UID=sa;'
-        'PWD=Password1;'
-    )
+    conn = psycopg2.connect(
+                host="192.168.30.134",
+                port="5432",
+                database="Telemetry data",
+                user="sa",
+                password="Password1;"
+
+            )
     cur=conn.cursor()
 
-    cur.execute("INSERT INTO dbo.cpu (cpu_percent, cpu_core_per, cpu_frequency) VALUES (?, ?, ?)", 
-                ( json.dumps(jsondata["cpu_percent"]),
-                  json.dumps(jsondata["cpu_per_core"]),
-                  json.dumps(jsondata["cpu_freq"])))
-    
-    # cur.execute("INSERT INTO dbo.ram (ram_used, ram_total, ram_percent) VALUES (%s, %s, %s)", 
-    #             (Json(jsondata["ram_used"]), 
-    #              Json(jsondata["ram_total"]), 
-    #              Json(jsondata["ram_percent"])))
-    
-    # cur.execute("INSERT INTO dbo.disk (disk_total, disk_used, disk_percent, read_bytes, write_bytes) VALUES (%s, %s, %s)", 
-    #             (Json(jsondata["disk_total"]), 
-    #              Json(jsondata["disk_used"]), 
-    #              Json(jsondata["disk_percent"]),
-    #              Json(jsondata["read_bytes"]),
-    #              Json(jsondata["write_bytes"])))
-    
-    # cur.execute("INSERT INTO dbo.thermal (cpu_temp, system_temp) VALUES (%s, %s, %s)", 
-    #             (Json(jsondata["cpu_temp"]), 
-    #              Json(jsondata["system_temp"])))
-    
+    cur.execute(
+    "INSERT INTO public.cpu (cpu_percent, cpu_core_per, cpu_frequency) VALUES (%s, %s, %s)",
+    (
+        jsondata["cpu_percent"],
+        Json(jsondata["cpu_per_core"]),
+        Json(jsondata["cpu_freq"]),
+    )
+)
+
+
+    cur.execute(
+    "INSERT INTO public.ram (ram_used, ram_total, ram_percent) VALUES (%s, %s, %s)",
+    (
+        jsondata["ram_used"],
+        jsondata["ram_total"],
+        jsondata["ram_percent"],
+    )
+)
+
+
+    cur.execute(
+    "INSERT INTO public.disk (disk_total, disk_used, disk_percent, read_bytes, write_bytes) VALUES (%s, %s, %s, %s, %s)",
+    (
+        jsondata["disk_total"],
+        jsondata["disk_used"],
+        jsondata["disk_percent"],
+        jsondata["read_bytes"],
+        jsondata["write_bytes"],
+    )
+)
+    cur.execute(
+    "INSERT INTO public.thermal (cpu_temp, system_temp) VALUES (%s, %s)",
+    (
+        jsondata["cpu_temp"],
+        jsondata["system_temp"],
+    )
+)
+
     conn.commit()
 
     #end of value insertion
