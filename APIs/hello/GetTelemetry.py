@@ -18,6 +18,7 @@ def home(request):
     )
     cur=conn.cursor()
     data = []
+
     #cpu
     cur.execute("SELECT TOP 10 cpu_percent, cpu_core_per, cpu_frequency FROM dbo.cpu")
     
@@ -29,32 +30,48 @@ def home(request):
     ]
     data.append(rows)
     
-    # #ram
-    # cur.execute("SELECT ram_used, ram_total, ram_percent FROM dbo.ram LIMIT %s", (number,) )
-    # for row in cur:
-    #     rows = cur.fetchone()
-    #     data.update(rows)
+    #ram
+    cur.execute("SELECT TOP 10 ram_used, ram_total, ram_per FROM dbo.ram")
+    
+    columns = [column[0] for column in cur.description]
 
-    # # #disk
-    # cur.execute("SELECT disk_used, disk_total, disk_percent, read_bytes, wite_bytes FROM dbo.disk LIMIT %s", (number,) )
-    # for row in cur:
-    #     rows = cur.fetchone()
-    #     data.update(rows)
+    rows = [
+        dict(zip(columns, row))
+        for row in cur.fetchall()
+    ]
+    data.append(rows)
+    
+    #disk
+    cur.execute("SELECT TOP 10 disk_used, disk_total, disk_percent, read_bytes, write_bytes FROM dbo.disk")
+    
+    columns = [column[0] for column in cur.description]
 
-    # # #thermal
-    # cur.execute("SELECT cpu_temp, system_temp FROM dbo.thermal LIMIT %s", (number,) )
-    # for row in cur:
-    #     rows = cur.fetchone()
-    #     data.update(rows)
+    rows = [
+        dict(zip(columns, row))
+        for row in cur.fetchall()
+    ]
+    data.append(rows)
+    
+    #temperatue
+    cur.execute("SELECT TOP 10 cpu_temp, system_temp FROM dbo.thermal")
+    
+    columns = [column[0] for column in cur.description]
+
+    rows = [
+        dict(zip(columns, row))
+        for row in cur.fetchall()
+    ]
+    data.append(rows)
 
     #end of value insertion
     cur.close()
     conn.close()
 
     data = json.dumps(data, indent=4)
+    # print(data)
     with open('data.json', 'w') as f:
         f.write(data)
-    return JsonResponse({"Action":"Completed"})
+    return JsonResponse(data, safe=False)
 
 def search(request, table_id):
     return JsonResponse({"cpu":table_id})
