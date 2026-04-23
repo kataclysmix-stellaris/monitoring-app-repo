@@ -262,3 +262,11 @@ function checkBoxes() {
 initCharts();
 tempDoesWorky();
 checkBoxes();
+
+const logoutButton = document.getElementById('logout_button');
+logoutButton?.addEventListener('click', () => {
+    // Will replace with fetch request to API endpoint for logout
+    // For now, just clear localStorage and redirect to login page
+    localStorage.removeItem('loggedInUser');
+    window.location.href = 'login.html';
+});

@@ -17,19 +17,30 @@ function getNodeStatus(data) {
         return 'OK'; 
     }
 }
-const elements = document.getElementsByClassName("vmObject");
+
+const virtualMachines = document.getElementsByClassName("vmObject");
 function notWorky(data) {
     const nodeStatus = getNodeStatus(data);
-    for (let el of elements) {
+    for (let vm of virtualMachines) {
         if (nodeStatus === 'Critical') {
-            el.style.color = "var(--color-red-400)";
+            vm.style.color = "var(--color-red-400)";
         }
         else if (nodeStatus === 'Warning') {
-            el.style.color = "var(--color-yellow-400)";
+            vm.style.color = "var(--color-yellow-400)";
         }
         else {
-            el.style.color = "var(--color-lime-400)";
+            vm.style.color = "var(--color-lime-400)";
         }
     }
 }
-notWorky(loadData());
+
+async function initialize() {
+    try {
+        const data = await loadData();
+        notWorky(data);
+    }
+    catch (error) {
+        console.error('Error initializing:', error);
+    }
+}
+initialize();
