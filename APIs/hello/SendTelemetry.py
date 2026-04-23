@@ -63,7 +63,7 @@ def home(request):
                 port="5432",
                 database="Telemetry",
                 user="carocha",
-                password="285827619;"
+                password="285827619"
 
             )
     cur=conn.cursor()
