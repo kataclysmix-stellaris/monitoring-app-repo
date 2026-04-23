@@ -8,9 +8,13 @@ import datetime #time gets the time for the json file so sql can use that to mak
 import requests  
 import os  
 
-URL = "https://"
-
 #if any of these are not recognised do "pip install name"
+
+# -------------------- setup --------------------
+
+URL = "https://"
+node_id = "1"
+wait_time = 5
 
 # -------------------- MAIN LOOP --------------------
 
@@ -85,6 +89,7 @@ while True:
     #------------------------build JSON---------------------------------------
 
     data = {
+        "node_id": node_id,
         "cpu_percent": round(cpu_percent, 2),
         "cpu_per_core": cpu_per_core,
         "cpu_freq": cpu_freq,
@@ -137,5 +142,5 @@ while True:
         print(f"ERROR sending data: {e}")
 
     # -------------------- WAIT 5 SECONDS --------------------
-    print("Waiting 5 seconds...")
-    time.sleep(5)
+    print(f"Waiting {wait_time} seconds...")
+    time.sleep(wait_time)
