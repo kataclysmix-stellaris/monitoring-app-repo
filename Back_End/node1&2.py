@@ -11,17 +11,16 @@ import platform
 import os
 import requests 
 
+#------------------------setup--------------------------------------------
+
 URL = "https://"
+node_id = "1"
+wait_time = 5
 
-# -------------------- NODE ID --------------------
+#------------------------Main Loop----------------------------------------
 
-node_id_path = "C:\\ProgramData\\node_id.txt"
-
-try:
-    with open(node_id_path, "r") as f:
-        node_id = f.read().strip()
-except:
-    node_id = "UNKNOWN_NODE"
+psutil.cpu_percent(interval=None) #starts the call then waits so it works the next time
+time.sleep(1)#sleeps to make sure it working
 
 while True:
     #------------------------grab full data node------------------------------
@@ -92,7 +91,7 @@ while True:
         print(f"An error occurred: {e}")
 
 
-
+    
     #------------------------grab data from each VM---------------------------
 
     vm_data_list = []
@@ -128,7 +127,7 @@ while True:
 
         except Exception as e:
             print("VM collection error:", e)
-
+    
     #------------------------put info on Json---------------------------------
 
     #Time
@@ -199,6 +198,6 @@ while True:
     except Exception as e:
         print(f"ERROR sending data: {e}")
 
-    # -------------------- WAIT 5 SECONDS --------------------
-    print("Waiting 5 seconds...")
-    time.sleep(5)
+    #------------------------Wait 5 Seconds-----------------------------------
+    print(f"Waiting {wait_time} seconds...")
+    time.sleep(wait_time)
