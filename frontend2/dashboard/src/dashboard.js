@@ -4,6 +4,7 @@ async function loadData() {
     const data = await result.json();
     return data;
 }
+
 function tempDoesWorky() {
     document.addEventListener("DOMContentLoaded", () => {
         const tempCheck = document.getElementById("tempCheck");
@@ -15,6 +16,7 @@ function tempDoesWorky() {
         }
     });
 }
+
 function getNodeStatus(data) {
     if (data.cpu_percent > 90 || data.ram_percent > 90 || data.disk_percent > 90) {
         document.getElementById("nodeStatus").style.color = "var(--color-red-400)";
@@ -27,11 +29,14 @@ function getNodeStatus(data) {
         return 'OK'; 
     }
 }
+
 const cpuTempSpan = document.getElementById('cpuTemp');
 const systemTempSpan = document.getElementById('sysTemp');
+
 function toCelsius(fahrenheit) {
     return (fahrenheit - 32) * 5 / 9;
 }
+
 let tempUnit = 'f'; // default to Fahrenheit
 const tempToggle = document.getElementsByName('unit');
 tempToggle.forEach(radio => {
@@ -39,6 +44,7 @@ tempToggle.forEach(radio => {
         tempUnit = radio.value;
     });
 });
+
 function formatTemp(value) {
   if (value === null) return 'N/A';
 
@@ -48,6 +54,7 @@ function formatTemp(value) {
 
   return `${value.toFixed(1)}°F`;
 }
+
 function updateTemperature(data) {
   cpuTempSpan.textContent = formatTemp(data.cpu_temp);
   systemTempSpan.textContent = formatTemp(data.system_temp);
@@ -55,6 +62,7 @@ function updateTemperature(data) {
   updateColor(cpuTempSpan, data.cpu_temp);
   updateColor(systemTempSpan, data.system_temp);
 }
+
 function updateColor(el, value) {
   if (value === null) return;
 
@@ -63,6 +71,7 @@ function updateColor(el, value) {
       ? 'var(--color-orange-400)'
       : 'var(--color-blue-400)';
 }
+
 function parseDateTime(date_log, time_log) {
     // --- DATE ---
     let [month, day, year] = date_log.split('/');
@@ -93,6 +102,7 @@ function parseDateTime(date_log, time_log) {
         Number(seconds)
     );
 }
+
 async function updateTime() {
     const data = await loadData();
     const now = new Date();
@@ -129,6 +139,7 @@ async function updateTime() {
     document.getElementById('timeNow').textContent =
         now.toLocaleTimeString('en-US', timeOptions);
 }
+
 async function initCharts() {
     const data = await loadData();
     Chart.defaults.color = 'white';
@@ -259,6 +270,7 @@ function checkBoxes() {
     });
 
 }
+
 initCharts();
 tempDoesWorky();
 checkBoxes();

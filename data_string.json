@@ -32,8 +32,8 @@
     "disk_percent": 36.44,
     "read_bytes": 53.56,
     "write_bytes": 39.42,
-    "cpu_temp": null,
-    "system_temp": null,
+    "cpu_temp": 56.0,
+    "system_temp": 60.0,
     "date_log": "04/08/26",
     "time_log": "10:37.28 AM"
 }
