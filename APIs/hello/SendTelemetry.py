@@ -61,9 +61,9 @@ def home(request):
     conn = psycopg2.connect(
                 host="192.168.30.134",
                 port="5432",
-                database="Telemetry data",
-                user="sa",
-                password="Password1;"
+                database="Telemetry",
+                user="carocha",
+                password="285827619;"
 
             )
     cur=conn.cursor()
