@@ -8,4 +8,11 @@ export default defineConfig({
     tailwindcss(),
     flowbiteReact()
   ],
+  build: {
+    rollupOptions: {
+      input: {
+        main: './login.html', // Points Vite to your renamed file
+      },
+    },
+  },
 })

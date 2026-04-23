@@ -646,3 +646,4 @@ CREATE INDEX idx_vms_status          ON public.vms     (status, recorded_at DESC
 
 -- VMs: user + node (RLS filter pattern)
 CREATE INDEX idx_vms_user_node       ON public.vms     (user_id, node_id);
+
