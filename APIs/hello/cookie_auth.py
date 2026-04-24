@@ -14,7 +14,7 @@ class LoginView(TokenObtainPairView):
        access_token = response.data.get('access')
        refresh_token = response.data.get('refresh')
 
-       res = Response({"message": "Login successful", "access": access_token, "refresh": refresh_token})
+       res = Response({"message": "Login successful"})
        res.set_cookie(
            key='access_token',
            value=access_token,
