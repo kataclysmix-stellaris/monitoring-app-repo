@@ -6,4 +6,7 @@ urlpatterns = [
     path("api/sendtelemetry", SendTelemetry.home),
     path("api/gettelemetry/", GetTelemetry.home),
     path("api/gettelemetry/<str:table_id>/", GetTelemetry.search),
+    path("api/login/", LoginView.as_view(), name="login"),
+    path("api/refresh/", RefreshCookieView.as_view(), name="token_refresh"),
+    path("api/logout/", LogoutView.as_view(), name="logout"),
 ]
