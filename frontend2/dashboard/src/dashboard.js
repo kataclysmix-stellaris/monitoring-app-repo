@@ -282,3 +282,7 @@ logoutButton?.addEventListener('click', () => {
     localStorage.removeItem('loggedInUser');
     window.location.href = 'login.html';
 });
+
+const userSpan = document.getElementById('user');
+const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'))?.username || 'User';
+if (userSpan) userSpan.textContent = loggedInUser;
