@@ -211,6 +211,13 @@ a:visited {
     padding-top: 0px;
     font-size: 20px;
     font-weight: bold;
+    cursor: pointer;
+    font-style: italic;
+    text-decoration: underline;
+}
+
+li {
+  cursor: pointer;
 }
 
 .nodisplay {
