@@ -62,7 +62,7 @@ def validate(jsondata):
         rules = {
             "cpu_percent": lambda x: x is not None and 0 <= x <= 100,
             "cpu_temp": lambda x: x is None or 0 <= x <= 100,
-            "cpu_per_core": lambda x: isinstance(x, list) and all(isinstance(i, (int, float)) and 0 <= i <= 100 for i in x),
+            "cpu_per_core": lambda x: isinstance(x, list) and all(isinstance(i, (int, float)) and 0 <= i <= 100 for i in x if i is not None),
             "cpu_freq": lambda x: isinstance(x, dict) and all(isinstance(v, (int, float)) and v >= 0 for v in x.values()),
 
             "ram_used": lambda x: x is not None and x >= 0,
