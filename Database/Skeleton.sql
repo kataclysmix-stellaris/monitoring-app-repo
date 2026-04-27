@@ -117,7 +117,7 @@ CREATE TABLE public.nodes (
 CREATE TABLE public.cpu (
     row_id              INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     cpu_percent         FLOAT           NOT NULL,
-    cpu_core_per        JSONB           NOT NULL DEFAULT '[]',
+    cpu_per_core        JSONB           NOT NULL DEFAULT '[]',
     cpu_frequency       JSONB           NOT NULL,
     user_id             UUID,
     node_id             UUID,
