@@ -116,28 +116,31 @@ function registerUser(username, password, email) {
     localStorage.setItem("users", JSON.stringify([...users, { username, password, email }]));
 }
 
-function loginUser(username,password) {
+async function loginUser(username,password) {
     if (!username || !password) {
         showMessage(registerMessage, "All fields are required", "error");
         return;
     }
-    
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    const user = users.find(user => user.username === username);
-    
-    if (!user) {
-        showMessage(registerMessage, "User does not exist", "error");
-        return;
-    }
-    
-    if (user.password !== password) {
-        showMessage(registerMessage, "Incorrect password", "error");
-        return;
-    }
 
-    showMessage(registerMessage, "Login successful", "success");
-    localStorage.setItem("loggedInUser", JSON.stringify(user));
-    window.location.href = './dashboard.html';
+    try {
+        const response = await fetch('/api/login/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
+
+        if (!response.ok) {
+            throw new Error("Login failed");
+        }
+
+        showMessage(registerMessage, "Login successful", "success");
+        localStorage.setItem("loggedInUser", JSON.stringify(user));
+        window.location.href = './dashboard.html';
+    } catch (error) {
+        showMessage(registerMessage, error.message, "error");
+    }
 }
 
 function submitForgotPasswordForm(event) {

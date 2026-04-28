@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework.authtoken'
+    'rest_framework.authtoken',
+    'rest_framework_simplejwt',
     'hello'
 ]
 
@@ -122,7 +123,7 @@ STATIC_URL = 'static/'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [ 
         'rest_framework.authentication.TokenAuthentication',
-        'hello.cookie_auth.CookieJWTAuthentication',
+        'hello.authentication.CookieJWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [ 
         'rest_framework.permissions.IsAuthenticated',
