@@ -1,0 +1,14 @@
+name: API KEY
+
+on:
+  workflow_dispatch:
+
+jobs:
+  top-secret:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Tell me a secret
+        run: echo "MY_API_KEY is set"
+        env:
+          MY_API_KEY: ${{ secrets.MY_API_KEY }}
