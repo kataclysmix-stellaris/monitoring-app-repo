@@ -1,5 +1,6 @@
 from django.urls import path
 from hello import SendTelemetry, GetTelemetry, cookie_auth
+from . import views
 
 urlpatterns = [
     path("", GetTelemetry.home, name="home"),
@@ -9,4 +10,5 @@ urlpatterns = [
     path("api/login/", cookie_auth.LoginView.as_view(), name="login"),
     path("api/refresh/", cookie_auth.RefreshCookieView.as_view(), name="token_refresh"),
     path("api/logout/", cookie_auth.LogoutView.as_view(), name="logout"),
+    path("api/register/", views.register_user, name="register"),
 ]

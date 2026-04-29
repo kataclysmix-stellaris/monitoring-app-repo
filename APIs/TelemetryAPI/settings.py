@@ -11,13 +11,17 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from corsheaders.defaults import default_headers
+from dotenv import load_dotenv
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+ENV_PATH = BASE_DIR / '.env'
+print("Looking for .env at:", ENV_PATH)
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+load_dotenv(dotenv_path=str(ENV_PATH), override=True)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-@5o5h53p-1%!eazyn%+o%poon=7x6k#ifs-z^g&-#*m@j0xw3j'
@@ -25,7 +29,11 @@ SECRET_KEY = 'django-insecure-@5o5h53p-1%!eazyn%+o%poon=7x6k#ifs-z^g&-#*m@j0xw3j
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "unrevised-immunize-reapply.ngrok-free.dev",
+]
 
 
 # Application definition
@@ -40,18 +48,59 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
-    'hello'
+    'hello',
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_CREDENTIALS = True
+CORS_URLS_REGEX = r"^/api/.*$"
+
+CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://unrevised-immunize-reapply.ngrok-free.dev",
+    'http://172.28.64.1:5173'
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://unrevised-immunize-reapply.ngrok-free.dev",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    'http://172.28.64.1:5173'
+]
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "authorization",
+]
+
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+]
+
+
+
+
+
+
 
 ROOT_URLCONF = 'TelemetryAPI.urls'
 
@@ -148,3 +197,10 @@ SIMPLE_JWT = {
         "rest_framework_simplejwt.tokens.AccessToken",
     ),
 }
+
+MY_API_KEY = os.getenv("MY_API_KEY")
+
+if not MY_API_KEY:
+    raise ValueError("MY_API_KEY is not set in environment variables")
+
+print("LOADED API KEY:", os.getenv("MY_API_KEY"))
