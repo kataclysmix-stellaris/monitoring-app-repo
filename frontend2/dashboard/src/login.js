@@ -84,6 +84,8 @@ function submitRegisterForm(event) {
     }
 }
 
+const IP = 'https://unrevised-immunize-reapply.ngrok-free.dev';
+
 function registerUser(username, password, email) {
     if (!username || !password || !email) {
         showMessage(registerMessage, "All fields are required", "error");
@@ -123,20 +125,24 @@ async function loginUser(username,password) {
     }
 
     try {
-        const response = await fetch('/api/login/', {
+        const response = await fetch(`${IP}/api/login/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({ username, password })
         });
 
+        const data = await response.json();
+
         if (!response.ok) {
-            throw new Error("Login failed");
+            throw new Error(data.detail || "Login failed");
         }
 
+
         showMessage(registerMessage, "Login successful", "success");
-        localStorage.setItem("loggedInUser", JSON.stringify(user));
+        localStorage.setItem("loggedInUser", JSON.stringify(data));
         window.location.href = './dashboard.html';
     } catch (error) {
         showMessage(registerMessage, error.message, "error");
