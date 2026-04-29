@@ -1,18 +1,20 @@
 #GetTelemetry will be used from frontend to retrieve data in the SQL database.
 from django.http import JsonResponse
-import json, pyodbc
+import json, pyodbc 
+from psycopg2.extras import Json
+import psycopg2
 
 def home(request):
 
     if request.method != "GET":
         return JsonResponse({"error":"GET required"}, status=405)
 
-    conn = pyodbc.connect(
-        'DRIVER={ODBC Driver 17 for SQL Server};'
-        'SERVER=192.168.30.134,1433;'
-        'DATABASE=Telemetry data;'
-        'UID=sa;'
-        'PWD=Password1;'
+    conn = psycopg2.connect(
+             host="192.168.30.134",
+             port="5432",
+             database="Telemetry",
+             user="carocha",
+             password="285827619"
     )
     cur=conn.cursor()
     data = []
