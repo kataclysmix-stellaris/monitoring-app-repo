@@ -11,16 +11,17 @@ def register_user(request):
 
     try:
         data = json.loads(request.body)
-        username = data.get("username")
-        password = data.get("password")
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-        if not username or not password:
-            return JsonResponse({"error": "Username and password are required"}, status=400)
+    username = data.get("username")
+    password = data.get("password")
 
-        user = User.objects.create_user(username=username, password=password)
-        user.save()
+    if not username or not password:
+        return JsonResponse({"error": "Username and password are required"}, status=400)
+
+    try:
+        User.objects.create_user(username=username, password=password)
         return JsonResponse({"message": "User registered successfully"})
     except IntegrityError:
         return JsonResponse({"error": "Username already exists"}, status=400)
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON"}, status=400)
