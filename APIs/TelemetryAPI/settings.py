@@ -148,3 +148,9 @@ SIMPLE_JWT = {
         "rest_framework_simplejwt.tokens.AccessToken",
     ),
 }
+import os
+
+MY_API_KEY = os.getenv("MY_API_KEY")
+
+if not MY_API_KEY:
+    raise ValueError("MY_API_KEY is not set in environment variables")
