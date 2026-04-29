@@ -1,5 +1,7 @@
 #SendTelemetry will be the POST api url the agent uses to send data formatted in data_string.json
+import os
 import re
+from django.conf import settings
 
 from django.http import JsonResponse, HttpResponse
 import json, pyodbc, datetime, django_cryptography
@@ -13,6 +15,11 @@ def home(request):
     #prevents GET from raising an error/breaking the page
     if request.method != "POST":
         return JsonResponse({"error":"POST required"}, status=405)
+    
+    #check API key in header, return error if invalid or missing
+    client_key = request.headers.get("X-API-Key")
+    if client_key != settings.MY_API_KEY:
+        return JsonResponse({"error":"invalid API key"}, status=401)
     
     #retrieves file sent
     file = request.FILES.get("file")
