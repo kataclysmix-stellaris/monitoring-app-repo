@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from corsheaders.defaults import default_headers
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +26,11 @@ SECRET_KEY = 'django-insecure-@5o5h53p-1%!eazyn%+o%poon=7x6k#ifs-z^g&-#*m@j0xw3j
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "unrevised-immunize-reapply.ngrok-free.dev",
+]
 
 
 # Application definition
@@ -40,18 +45,59 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
-    'hello'
+    'hello',
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_CREDENTIALS = True
+CORS_URLS_REGEX = r"^/api/.*$"
+
+CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://unrevised-immunize-reapply.ngrok-free.dev",
+    'http://172.28.64.1:5173'
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://unrevised-immunize-reapply.ngrok-free.dev",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    'http://172.28.64.1:5173'
+]
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "authorization",
+]
+
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+]
+
+
+
+
+
+
 
 ROOT_URLCONF = 'TelemetryAPI.urls'
 
@@ -148,13 +194,3 @@ SIMPLE_JWT = {
         "rest_framework_simplejwt.tokens.AccessToken",
     ),
 }
-from dotenv import load_dotenv
-import os
-
-load_dotenv(dotenv_path=".env")
-
-MY_API_KEY = os.getenv("MY_API_KEY")
-
-if not MY_API_KEY:
-    raise ValueError("MY_API_KEY is not set in environment variables")
-
