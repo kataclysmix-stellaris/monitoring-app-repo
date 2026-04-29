@@ -12,13 +12,16 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from corsheaders.defaults import default_headers
+from dotenv import load_dotenv
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+ENV_PATH = BASE_DIR / '.env'
+print("Looking for .env at:", ENV_PATH)
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+load_dotenv(dotenv_path=str(ENV_PATH), override=True)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-@5o5h53p-1%!eazyn%+o%poon=7x6k#ifs-z^g&-#*m@j0xw3j'
@@ -195,10 +198,9 @@ SIMPLE_JWT = {
     ),
 }
 
-from dotenv import load_dotenv
-import os
-
 MY_API_KEY = os.getenv("MY_API_KEY")
 
 if not MY_API_KEY:
     raise ValueError("MY_API_KEY is not set in environment variables")
+
+print("LOADED API KEY:", os.getenv("MY_API_KEY"))
