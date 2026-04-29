@@ -1,0 +1,20 @@
+name: Run Telemetry
+
+on:
+  workflow_dispatch:
+
+jobs:
+  send-telemetry:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: pip install requests python-dotenv # add others if needed
+
+      - name: Run telemetry script
+        run: python APIs/hello/SendTelemetry.py
+        env:
+          MY_API_KEY: ${{ secrets.MY_API_KEY }}
