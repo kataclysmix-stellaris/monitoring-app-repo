@@ -148,9 +148,13 @@ SIMPLE_JWT = {
         "rest_framework_simplejwt.tokens.AccessToken",
     ),
 }
+from dotenv import load_dotenv
 import os
+
+load_dotenv(dotenv_path=".env")
 
 MY_API_KEY = os.getenv("MY_API_KEY")
 
 if not MY_API_KEY:
     raise ValueError("MY_API_KEY is not set in environment variables")
+
