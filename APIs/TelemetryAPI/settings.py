@@ -128,9 +128,9 @@ WSGI_APPLICATION = 'TelemetryAPI.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'Telemetry',
-        'USER': 'carocha',
-        'PASSWORD': '285827619',
+        'NAME': 'telemetry',
+        'USER': 'postgres',
+        'PASSWORD': 'abcd',
         'HOST': '192.168.30.134',
         'PORT': '5432',
     }
