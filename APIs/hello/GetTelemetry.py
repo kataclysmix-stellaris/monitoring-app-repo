@@ -78,12 +78,12 @@ def search(request, table_id):
     if request.method != "GET":
         return JsonResponse({"error":"GET required"}, status=405)
     
-    conn = pyodbc.connect(
-    'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=192.168.30.134,1433;'
-    'DATABASE=Telemetry data;'
-    'UID=sa;'
-    'PWD=Password1;'
+    conn = psycopg2.connect(
+             host="192.168.30.134",
+             port="5432",
+             database="telemetry",
+             user="postgres",
+             password="abcd"
     )
     
     cur=conn.cursor()
