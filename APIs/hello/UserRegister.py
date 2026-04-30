@@ -22,6 +22,6 @@ def register_user(request):
 
     try:
         User.objects.create_user(username=username, password=password)
-        return JsonResponse({"message": "User registered successfully"})
+        return JsonResponse({"message": "User registered successfully"}, status=201)
     except IntegrityError:
         return JsonResponse({"error": "Username already exists"}, status=400)
