@@ -92,18 +92,6 @@ function registerUser(username, password, email) {
         return;
     }
     
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    
-    if (users.find(user => user.username === username)) {
-        showMessage(registerMessage, "Username already exists", "error");
-        return;
-    }
-
-    if (users.find(user => user.email === email)) {
-        showMessage(registerMessage, "Email already exists", "error");
-        return;
-    }
-    
     if (username.includes(' ') || password.includes(' ') || email.includes(' ')) {
         showMessage(registerMessage, "Inputs cannot contain spaces", "error");
         return;
@@ -113,9 +101,17 @@ function registerUser(username, password, email) {
         showMessage(registerMessage, "Password must be at least 8 or more characters", "error");
         return;
     }
-
-    showMessage(registerMessage, "Registration successful", "success");
-    localStorage.setItem("users", JSON.stringify([...users, { username, password, email }]));
+    try {
+        fetch(`${IP}/api/register/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
+    } catch (error) {
+        showMessage(registerMessage, error.message, "error");
+    } 
 }
 
 async function loginUser(username,password) {
@@ -137,12 +133,12 @@ async function loginUser(username,password) {
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.detail || "Login failed");
+            throw new Error(data.message || "Login failed");
         }
 
 
         showMessage(registerMessage, "Login successful", "success");
-        localStorage.setItem("loggedInUser", JSON.stringify(data));
+        localStorage.setItem("loggedInUser", JSON.stringify(username));
         window.location.href = './dashboard.html';
     } catch (error) {
         showMessage(registerMessage, error.message, "error");

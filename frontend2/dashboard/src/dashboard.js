@@ -275,14 +275,28 @@ initCharts();
 tempDoesWorky();
 checkBoxes();
 
+const IP = 'https://unrevised-immunize-reapply.ngrok-free.dev';
 const logoutButton = document.getElementById('logout_button');
-logoutButton?.addEventListener('click', () => {
-    // Will replace with fetch request to API endpoint for logout
-    // For now, just clear localStorage and redirect to login page
-    localStorage.removeItem('loggedInUser');
-    window.location.href = 'login.html';
+logoutButton?.addEventListener('click', async () => {
+    try {
+        const response = await fetch(`${IP}/api/logout`, { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+         });
+    
+         if (!response.ok) {
+            throw new Error('Logout Failed');
+         }
+        localStorage.removeItem('loggedInUser');
+        window.location.href = 'login.html';
+    }
+    catch (error) {
+        console.error(error);
+    }
 });
-
 const userSpan = document.getElementById('user');
-const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'))?.username || 'User';
-if (userSpan) userSpan.textContent = loggedInUser;
+const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
+if (userSpan) userSpan.textContent = loggedInUser || 'Userssss';

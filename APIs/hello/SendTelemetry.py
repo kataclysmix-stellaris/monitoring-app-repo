@@ -148,7 +148,7 @@ def insert_into_db(jsondata):
         cur=conn.cursor()
 
         cur.execute(
-    "INSERT INTO public.cpu (cpu_percent, cpu_core_per, cpu_frequency) VALUES (%s, %s, %s)",
+    "INSERT INTO public.cpu (cpu_percent, cpu_per_core, cpu_frequency) VALUES (%s, %s, %s)",
     (
         jsondata["cpu_percent"],
         Json(jsondata["cpu_per_core"]),
