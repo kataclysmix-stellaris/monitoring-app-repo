@@ -33,6 +33,8 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "unrevised-immunize-reapply.ngrok-free.dev",
+    "192.168.30.135",
+    "*"
 ]
 
 
