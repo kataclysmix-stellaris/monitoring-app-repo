@@ -133,12 +133,12 @@ async function loginUser(username,password) {
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.detail || "Login failed");
+            throw new Error(data.message || "Login failed");
         }
 
 
         showMessage(registerMessage, "Login successful", "success");
-        localStorage.setItem("loggedInUser", JSON.stringify(data));
+        localStorage.setItem("loggedInUser", JSON.stringify(username));
         window.location.href = './dashboard.html';
     } catch (error) {
         showMessage(registerMessage, error.message, "error");

@@ -79,6 +79,6 @@ class LogoutView(APIView):
                 # Optionally log the exception here
                 pass
         res = Response({"message": "Logout successful"})
-        res.delete_cookie('access_token', path='/', samesite="None")
-        res.delete_cookie('refresh_token', path='/', samesite="None")
+        res.delete_cookie('access_token', httponly=True, secure=True, samesite="None", path='/')
+        res.delete_cookie('refresh_token', httponly=True, secure=True, samesite="None", path='/')
         return res
