@@ -20,7 +20,7 @@ def home(request):
     data = []
 
     #cpu
-    cur.execute("SELECT TOP 10 cpu_percent, cpu_core_per, cpu_frequency FROM dbo.cpu")
+    cur.execute("SELECT cpu_percent, cpu_core_per, cpu_frequency FROM cpu LIMIT 10")
     
     columns = [column[0] for column in cur.description]
 
@@ -31,7 +31,7 @@ def home(request):
     data.append(rows)
     
     #ram
-    cur.execute("SELECT TOP 10 ram_used, ram_total, ram_per FROM dbo.ram")
+    cur.execute("SELECT ram_used, ram_total, ram_per FROM ram LIMIT 10")
     
     columns = [column[0] for column in cur.description]
 
@@ -42,7 +42,7 @@ def home(request):
     data.append(rows)
     
     #disk
-    cur.execute("SELECT TOP 10 disk_used, disk_total, disk_percent, read_bytes, write_bytes FROM dbo.disk")
+    cur.execute("SELECT disk_used, disk_total, disk_percent, read_bytes, write_bytes FROM disk LIMIT 10")
     
     columns = [column[0] for column in cur.description]
 
@@ -53,7 +53,7 @@ def home(request):
     data.append(rows)
     
     #temperatue
-    cur.execute("SELECT TOP 10 cpu_temp, system_temp FROM dbo.thermal")
+    cur.execute("SELECT cpu_temp, system_temp FROM thermal LIMIT 10")
     
     columns = [column[0] for column in cur.description]
 
@@ -91,7 +91,7 @@ def search(request, table_id):
 
     match table_id:
         case "cpu":
-            cur.execute("SELECT TOP 10 cpu_percent, cpu_core_per, cpu_frequency FROM dbo.cpu")
+            cur.execute("SELECT cpu_percent, cpu_core_per, cpu_frequency FROM cpu LIMIT 10")
     
             columns = [column[0] for column in cur.description]
 
@@ -101,7 +101,7 @@ def search(request, table_id):
             ]
             data.append(rows)
         case "ram":
-            cur.execute("SELECT TOP 10 ram_used, ram_total, ram_per FROM dbo.ram")
+            cur.execute("SELECT ram_used, ram_total, ram_per FROM ram LIMIT 10")
     
             columns = [column[0] for column in cur.description]
 
@@ -111,7 +111,7 @@ def search(request, table_id):
             ]
             data.append(rows)
         case "disk":
-            cur.execute("SELECT TOP 10 disk_used, disk_total, disk_percent, read_bytes, write_bytes FROM dbo.disk")
+            cur.execute("SELECT disk_used, disk_total, disk_percent, read_bytes, write_bytes FROM disk LIMIT 10")
     
             columns = [column[0] for column in cur.description]
 
@@ -121,7 +121,7 @@ def search(request, table_id):
             ]
             data.append(rows)
         case "temperature":
-            cur.execute("SELECT TOP 10 cpu_temp, system_temp FROM dbo.thermal")
+            cur.execute("SELECT cpu_temp, system_temp FROM thermal LIMIT 10")
     
             columns = [column[0] for column in cur.description]
 

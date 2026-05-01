@@ -86,6 +86,8 @@ def validate(jsondata):
             "read_bytes": lambda x: x is not None and x >= 0,
             "write_bytes": lambda x: x is None or x >= 0,
 
+            "date_log": lambda x: x==x,
+            "time_log": lambda x: x==x
         }
 
         # Normalize all values first
@@ -146,7 +148,7 @@ def insert_into_db(jsondata):
         cur=conn.cursor()
 
         cur.execute(
-    "INSERT INTO public.cpu (cpu_percent, cpu_per_core, cpu_frequency) VALUES (%s, %s, %s)",
+    "INSERT INTO public.cpu (cpu_percent, cpu_core_per, cpu_frequency) VALUES (%s, %s, %s)",
     (
         jsondata["cpu_percent"],
         Json(jsondata["cpu_per_core"]),
@@ -156,11 +158,12 @@ def insert_into_db(jsondata):
 
 
         cur.execute(
-    "INSERT INTO public.ram (ram_used, ram_total, ram_percent) VALUES (%s, %s, %s)",
+    "INSERT INTO public.ram (ram_used, ram_total, ram_per, swap_per) VALUES (%s, %s, %s, %s)",
     (
         jsondata["ram_used"],
         jsondata["ram_total"],
         jsondata["ram_percent"],
+        jsondata["swap_percent"],
     )
 )
 
