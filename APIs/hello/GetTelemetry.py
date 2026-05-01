@@ -20,7 +20,7 @@ def home(request):
     data = []
 
     #cpu
-    cur.execute("SELECT cpu_percent, cpu_core_per, cpu_frequency FROM cpu LIMIT 10")
+    cur.execute("SELECT cpu_percent, cpu_per_core, cpu_frequency FROM cpu LIMIT 10")
     
     columns = [column[0] for column in cur.description]
 
@@ -91,7 +91,7 @@ def search(request, table_id):
 
     match table_id:
         case "cpu":
-            cur.execute("SELECT cpu_percent, cpu_core_per, cpu_frequency FROM cpu LIMIT 10")
+            cur.execute("SELECT cpu_percent, cpu_per_core, cpu_frequency FROM cpu LIMIT 10")
     
             columns = [column[0] for column in cur.description]
 
