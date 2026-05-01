@@ -275,6 +275,7 @@ initCharts();
 tempDoesWorky();
 checkBoxes();
 
+
 const IP = 'https://unrevised-immunize-reapply.ngrok-free.dev';
 const logoutButton = document.getElementById('logout_button');
 logoutButton?.addEventListener('click', async () => {
@@ -285,11 +286,11 @@ logoutButton?.addEventListener('click', async () => {
                 'Content-Type': 'application/json'
             },
             credentials: 'include'
-         });
-    
-         if (!response.ok) {
+        });
+        
+        if (!response.ok) {
             throw new Error('Logout Failed');
-         }
+        }
         localStorage.removeItem('loggedInUser');
         window.location.href = 'login.html';
     }
@@ -297,6 +298,7 @@ logoutButton?.addEventListener('click', async () => {
         console.error(error);
     }
 });
+
 const userSpan = document.getElementById('user');
 const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
 if (userSpan) userSpan.textContent = loggedInUser || 'Userssss';
