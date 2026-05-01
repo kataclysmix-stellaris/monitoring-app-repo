@@ -279,7 +279,7 @@ const IP = 'https://unrevised-immunize-reapply.ngrok-free.dev';
 const logoutButton = document.getElementById('logout_button');
 logoutButton?.addEventListener('click', async () => {
     try {
-        const response = await fetch(`${IP}/api/logout`, { 
+        const response = await fetch(`${IP}/api/logout/`, { 
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
